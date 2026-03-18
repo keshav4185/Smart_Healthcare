@@ -1,0 +1,67 @@
+Folder PATH listing
+Volume serial number is 3E1C-0E9D
+C:\SMART HEALTHCARE\SMART-HEALTHCARE\SRC
+|   App.css
+|   App.jsx
+|   index.css
+|   main.jsx
+|   
++---assets
+|   |   react.svg
+|   |   
+|   +---icons
+|   \---images
++---components
+|   +---common
+|   |       Button.jsx
+|   |       Card.jsx
+|   |       Input.jsx
+|   |       Loading.jsx
+|   |       
+|   +---features
+|   \---layout
+|           MainLayout.jsx
+|           Navbar.jsx
+|           Sidebar.jsx
+|           
++---constants
+|       apiEndpoints.js
+|       roles.js
+|       
++---context
+|       AuthContext.jsx
+|       
++---hooks
+|       useApi.js
+|       
++---pages
+|   +---admin
+|   |       AdminDashboard.jsx
+|   |       
+|   +---auth
+|   |       Login.jsx
+|   |       Register.jsx
+|   |       
+|   +---doctor
+|   |       DoctorDashboard.jsx
+|   |       
+|   \---patient
+|           AppointmentsPage.jsx
+|           PatientDashboard.jsx
+|           SymptomsPage.jsx
+|           
++---routes
+|       index.jsx
+|       ProtectedRoute.jsx
+|       
++---services
+|   \---api
+|           appointmentService.js
+|           authService.js
+|           axiosInstance.js
+|           diagnosisService.js
+|           
+\---utils
+        errorHandler.js
+        helpers.js
+        
