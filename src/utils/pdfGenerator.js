@@ -107,6 +107,7 @@ export const generateMedicalReportPDF = (reportData) => {
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
+  return `Medical_Report_${patientName.replace(/\s+/g, '_')}.html`;
 };
 
 // Generate symptoms summary

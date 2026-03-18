@@ -45,7 +45,8 @@ const PatientDashboard = () => {
         findings: analysis.finding,
       };
       
-      generateMedicalReportPDF(reportData);
+      const filename = generateMedicalReportPDF(reportData);
+      console.info('Report downloaded:', filename);
     }
   };
 

@@ -1,3 +1,4 @@
+// Single source of truth for email validation (also used in helpers.js)
 export const validateEmail = (email) => {
   const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return regex.test(email);

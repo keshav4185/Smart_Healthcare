@@ -5,6 +5,7 @@ import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import { mockDoctors } from '../../services/api/mockAuthService';
 import { useAuth } from '../../context/AuthContext';
+import { useAppointments } from '../../context/AppointmentContext';
 
 const timeSlots = ['10:00 AM','10:30 AM','11:00 AM','11:30 AM','02:00 PM','02:30 PM','03:00 PM','03:30 PM'];
 
@@ -14,7 +15,12 @@ const getNextDates = () => {
   for (let i = 1; dates.length < 6; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() + i);
-    if (d.getDay() !== 0) dates.push(d.toISOString().split('T')[0]);
+    if (d.getDay() !== 0) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      dates.push(`${y}-${m}-${day}`);
+    }
   }
   return dates;
 };
@@ -23,11 +29,13 @@ const BookAppointmentPage = () => {
   const { doctorId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { addAppointment } = useAppointments();
 
   const doctor = mockDoctors.find(d => d.id === doctorId) || mockDoctors[0];
   const availableDates = getNextDates();
 
   const [step, setStep] = useState(1);
+  const [bookedApt, setBookedApt] = useState(null);
   const [formData, setFormData] = useState({
     date: '', timeSlot: '', reason: '', symptoms: '',
     patientName: user?.name || '', patientAge: '', patientGender: '',
@@ -35,7 +43,11 @@ const BookAppointmentPage = () => {
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
-  const appointmentId = `APT${Math.floor(Math.random() * 90000 + 10000)}`;
+  const handleConfirm = () => {
+    const apt = addAppointment(doctor, formData);
+    setBookedApt(apt);
+    setStep(4);
+  };
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -175,7 +187,7 @@ const BookAppointmentPage = () => {
 
                 <div className="flex gap-3">
                   <Button variant="secondary" onClick={() => setStep(2)}>← Back</Button>
-                  <Button variant="primary" className="flex-1" onClick={() => setStep(4)}>✅ Confirm & Book</Button>
+                  <Button variant="primary" className="flex-1" onClick={handleConfirm}>✅ Confirm & Book</Button>
                 </div>
               </div>
             </Card>
@@ -189,9 +201,9 @@ const BookAppointmentPage = () => {
                 <h2 className="text-2xl font-bold text-green-600 mb-2">Appointment Booked!</h2>
                 <p className="text-gray-500 mb-6">Your appointment has been confirmed successfully.</p>
                 <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left space-y-2 text-sm">
-                  <p>🆔 Appointment ID: <span className="font-bold text-primary-600">#{appointmentId}</span></p>
+                  <p>🆔 Appointment ID: <span className="font-bold text-primary-600">#{bookedApt?.id}</span></p>
                   <p>👨⚕️ Doctor: <span className="font-medium">{doctor.name}</span></p>
-                  <p>📅 Date: <span className="font-medium">{new Date(formData.date).toLocaleDateString('en-IN', { weekday: 'long', month: 'long', day: 'numeric' })}</span></p>
+                  <p>📅 Date: <span className="font-medium">{new Date(formData.date + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'long', month: 'long', day: 'numeric' })}</span></p>
                   <p>🕐 Time: <span className="font-medium">{formData.timeSlot}</span></p>
                   <p>💰 Fee: <span className="font-medium text-green-600">₹{doctor.fee}</span></p>
                 </div>

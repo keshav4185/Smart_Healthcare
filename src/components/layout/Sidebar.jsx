@@ -73,6 +73,7 @@ const Sidebar = () => {
             <Link
               key={item.path}
               to={item.path}
+              onClick={() => setIsOpen(false)}
               className={`flex items-center gap-3 px-6 py-3 transition-colors ${
                 location.pathname === item.path
                   ? 'bg-primary-700 border-l-4 border-white'

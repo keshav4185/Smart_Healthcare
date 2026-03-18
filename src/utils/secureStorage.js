@@ -1,5 +1,6 @@
-// Secure storage: sessionStorage expires when browser tab closes
-// Better than localStorage for sensitive tokens (reduces XSS window)
+// sessionStorage expires when browser tab closes — better than localStorage for tokens.
+// Note: btoa/atob is base64 ENCODING, not encryption. Suitable for demo only.
+// For production, use HttpOnly cookies or a proper encryption library.
 
 const PREFIX = 'hc_';
 

@@ -3,12 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import EmergencySOS from '../../components/common/EmergencySOS';
-
-const mockAppointments = [
-  { id: 1, doctorName: 'Dr. Sarah Smith', specialty: 'Cardiologist', date: '2025-07-20', time: '10:00 AM', status: 'confirmed', reason: 'Chest pain checkup', fee: 800 },
-  { id: 2, doctorName: 'Dr. Sarah Smith', specialty: 'Cardiologist', date: '2025-06-15', time: '11:00 AM', status: 'completed', reason: 'Follow-up consultation', fee: 800 },
-  { id: 3, doctorName: 'Dr. Sarah Smith', specialty: 'Cardiologist', date: '2025-06-01', time: '02:00 PM', status: 'cancelled', reason: 'Routine checkup', fee: 800 },
-];
+import { useAppointments } from '../../context/AppointmentContext';
 
 const statusColors = {
   confirmed: 'bg-green-100 text-green-800',
@@ -19,14 +14,14 @@ const statusColors = {
 
 const AppointmentsPage = () => {
   const navigate = useNavigate();
-  const [appointments, setAppointments] = useState(mockAppointments);
+  const { appointments, cancelAppointment } = useAppointments();
   const [filter, setFilter] = useState('all');
   const [cancelId, setCancelId] = useState(null);
 
   const filtered = filter === 'all' ? appointments : appointments.filter(a => a.status === filter);
 
   const handleCancel = (id) => {
-    setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'cancelled' } : a));
+    cancelAppointment(id);
     setCancelId(null);
   };
 

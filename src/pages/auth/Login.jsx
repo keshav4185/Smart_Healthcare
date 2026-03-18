@@ -81,9 +81,9 @@ const Login = () => {
 
         <div className="mt-6 bg-gray-50 rounded-lg p-4 text-xs text-gray-500 space-y-1">
           <p className="font-semibold text-gray-600 mb-2">Demo Credentials:</p>
-          <p>🧑 Patient: {import.meta.env.VITE_PATIENT_EMAIL}</p>
-          <p>👨⚕️ Doctor: {import.meta.env.VITE_DOCTOR_EMAIL}</p>
-          <p>🛡️ Admin: {import.meta.env.VITE_ADMIN_EMAIL}</p>
+          <p>🧑 Patient: patient@demo.com / patient123</p>
+          <p>👨⚕️ Doctor: doctor@demo.com / doctor123</p>
+          <p>🛡️ Admin: admin@healthcare.com / admin@123</p>
         </div>
 
         <p className="text-center text-gray-600 mt-4">

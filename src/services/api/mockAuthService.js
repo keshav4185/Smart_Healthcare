@@ -152,9 +152,14 @@ export const mockDoctors = [
 ];
 
 const USERS = {
-  [import.meta.env.VITE_PATIENT_EMAIL]: { role: 'patient', name: 'John Patient', password: import.meta.env.VITE_PATIENT_PASSWORD },
-  [import.meta.env.VITE_DOCTOR_EMAIL]: { role: 'doctor', name: 'Dr. Sarah Smith', password: import.meta.env.VITE_DOCTOR_PASSWORD },
-  [import.meta.env.VITE_ADMIN_EMAIL]: { role: 'admin', name: 'Admin', password: import.meta.env.VITE_ADMIN_PASSWORD },
+  'patient@demo.com': { id: 'u_patient', role: 'patient', name: 'John Patient', password: 'patient123' },
+  'doctor@demo.com': { id: 'd1', role: 'doctor', name: 'Dr. Sarah Smith', password: 'doctor123' },
+  'admin@healthcare.com': { id: 'u_admin', role: 'admin', name: 'Admin', password: 'admin@123' },
+  ...(import.meta.env.VITE_PATIENT_EMAIL ? {
+    [import.meta.env.VITE_PATIENT_EMAIL]: { id: 'u_patient', role: 'patient', name: 'John Patient', password: import.meta.env.VITE_PATIENT_PASSWORD },
+    [import.meta.env.VITE_DOCTOR_EMAIL]: { id: 'd1', role: 'doctor', name: 'Dr. Sarah Smith', password: import.meta.env.VITE_DOCTOR_PASSWORD },
+    [import.meta.env.VITE_ADMIN_EMAIL]: { id: 'u_admin', role: 'admin', name: 'Admin', password: import.meta.env.VITE_ADMIN_PASSWORD },
+  } : {}),
 };
 
 export const mockAuthService = {
@@ -173,7 +178,7 @@ export const mockAuthService = {
       accessToken: 'mock-token-' + Date.now(),
       refreshToken: 'mock-refresh-' + Date.now(),
       user: {
-        id: Math.random().toString(36).substr(2, 9),
+        id: user.id,
         email: credentials.email,
         name: user.name,
         role: user.role,

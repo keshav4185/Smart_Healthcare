@@ -30,7 +30,7 @@ const Register = () => {
     if (!formData.name.trim()) newErrors.name = 'Name is required';
     if (!formData.email.trim()) newErrors.email = 'Email is required';
     if (!formData.phone.trim()) newErrors.phone = 'Phone is required';
-    if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
+    if (formData.password.length < 8) newErrors.password = 'Password must be at least 8 characters';
     if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
     if (formData.role === USER_ROLES.DOCTOR) {
       if (!formData.specialty) newErrors.specialty = 'Specialty is required';

@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
 import ProtectedRoute from './ProtectedRoute';
 import { USER_ROLES } from '../constants/roles';
@@ -26,6 +26,7 @@ import AdminDashboard from '../pages/admin/AdminDashboard';
 
 // Profile
 import ProfilePage from '../pages/ProfilePage';
+import RoleRedirect from './RoleRedirect';
 
 const router = createBrowserRouter([
   {
@@ -44,7 +45,7 @@ const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      // Patient Routes
+      { index: true, element: <RoleRedirect /> },
       {
         path: 'patient/dashboard',
         element: (

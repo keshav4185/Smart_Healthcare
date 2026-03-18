@@ -4,10 +4,13 @@ import Button from '../components/common/Button';
 import Input from '../components/common/Input';
 import { useAuth } from '../context/AuthContext';
 import { USER_ROLES } from '../constants/roles';
+import { mockDoctors } from '../services/api/mockAuthService';
 
 const ProfilePage = () => {
   const { user } = useAuth();
   const isDoctor = user?.role === USER_ROLES.DOCTOR;
+
+  const doctorData = isDoctor ? mockDoctors.find(d => d.id === user.id) : null;
 
   const [editing, setEditing] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -18,13 +21,13 @@ const ProfilePage = () => {
     address: 'Mumbai, Maharashtra',
     dob: '1990-05-15',
     bloodGroup: 'B+',
-    // Doctor fields
-    specialty: 'Cardiologist',
-    hospital: 'City Hospital, Mumbai',
-    experience: '10 years',
-    licenseNumber: 'MH-12345',
-    education: 'MBBS, MD - Cardiology',
-    bio: 'Experienced cardiologist with 10+ years of practice.',
+    // Doctor fields from mockDoctors
+    specialty: doctorData?.specialty || '',
+    hospital: doctorData?.hospital || '',
+    experience: doctorData?.experience || '',
+    licenseNumber: doctorData?.licenseNumber || '',
+    education: doctorData?.education || '',
+    bio: doctorData ? `${doctorData.name} is a highly experienced ${doctorData.specialty} with ${doctorData.experience} of practice at ${doctorData.hospital}.` : '',
   });
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });

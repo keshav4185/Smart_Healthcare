@@ -5,34 +5,34 @@ import { formatDate } from '../../utils/helpers';
 
 const MedicalRecordsPage = () => {
   const [records] = useState([
-    {
-      id: 1,
-      type: 'Lab Report',
-      title: 'Blood Test Results',
-      date: '2024-02-15',
-      doctor: 'Dr. Sarah Smith',
-      status: 'Completed',
-      fileSize: '2.5 MB',
-    },
-    {
-      id: 2,
-      type: 'Prescription',
-      title: 'Medication for Fever',
-      date: '2024-02-10',
-      doctor: 'Dr. John Doe',
-      status: 'Active',
-      fileSize: '1.2 MB',
-    },
-    {
-      id: 3,
-      type: 'X-Ray',
-      title: 'Chest X-Ray',
-      date: '2024-01-28',
-      doctor: 'Dr. Michael Brown',
-      status: 'Completed',
-      fileSize: '3.8 MB',
-    },
+    { id: 1, type: 'Lab Report', title: 'Blood Test Results', date: '2024-02-15', doctor: 'Dr. Sarah Smith', status: 'Completed', fileSize: '2.5 MB' },
+    { id: 2, type: 'Prescription', title: 'Medication for Fever', date: '2024-02-10', doctor: 'Dr. John Doe', status: 'Active', fileSize: '1.2 MB' },
+    { id: 3, type: 'X-Ray', title: 'Chest X-Ray', date: '2024-01-28', doctor: 'Dr. Michael Brown', status: 'Completed', fileSize: '3.8 MB' },
   ]);
+
+  const handleView = (record) => {
+    alert(`Viewing: ${record.title}\nDoctor: ${record.doctor}\nDate: ${formatDate(record.date)}\n\n(In production, this would open the file in a viewer.)`);
+  };
+
+  const handleDownload = (record) => {
+    const content = `Medical Record\n\nTitle: ${record.title}\nType: ${record.type}\nDoctor: ${record.doctor}\nDate: ${formatDate(record.date)}\nStatus: ${record.status}\n\nThis is a placeholder download. Connect to backend for real files.`;
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${record.title.replace(/\s+/g, '_')}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleShare = (record) => {
+    if (navigator.share) {
+      navigator.share({ title: record.title, text: `Medical record: ${record.title} by ${record.doctor}` });
+    } else {
+      navigator.clipboard.writeText(`Medical record: ${record.title} by ${record.doctor} on ${formatDate(record.date)}`);
+      alert('Record info copied to clipboard!');
+    }
+  };
 
   return (
     <div>
@@ -64,13 +64,13 @@ const MedicalRecordsPage = () => {
                 </p>
               </div>
               <div className="flex gap-2 w-full sm:w-auto">
-                <Button size="sm" variant="primary" className="flex-1 sm:flex-none">
+                <Button size="sm" variant="primary" className="flex-1 sm:flex-none" onClick={() => handleView(record)}>
                   👁️ View
                 </Button>
-                <Button size="sm" variant="secondary" className="flex-1 sm:flex-none">
+                <Button size="sm" variant="secondary" className="flex-1 sm:flex-none" onClick={() => handleDownload(record)}>
                   ⬇️ Download
                 </Button>
-                <Button size="sm" variant="outline" className="flex-1 sm:flex-none">
+                <Button size="sm" variant="outline" className="flex-1 sm:flex-none" onClick={() => handleShare(record)}>
                   📤 Share
                 </Button>
               </div>
