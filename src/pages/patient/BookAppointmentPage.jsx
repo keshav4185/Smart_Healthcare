@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
-import { mockDoctors } from '../../services/api/mockAuthService';
 import { useAuth } from '../../context/AuthContext';
 import { useAppointments } from '../../context/AppointmentContext';
+import axiosInstance from '../../services/api/axiosInstance';
 
 const timeSlots = ['10:00 AM','10:30 AM','11:00 AM','11:30 AM','02:00 PM','02:30 PM','03:00 PM','03:30 PM'];
 
@@ -31,29 +31,72 @@ const BookAppointmentPage = () => {
   const { user } = useAuth();
   const { addAppointment } = useAppointments();
 
-  const doctor = mockDoctors.find(d => d.id === doctorId) || mockDoctors[0];
-  const availableDates = getNextDates();
-
+  const [doctor, setDoctor] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [step, setStep] = useState(1);
   const [bookedApt, setBookedApt] = useState(null);
+  const [booking, setBooking] = useState(false);
+  const [bookingError, setBookingError] = useState('');
+  const [bookedSlots, setBookedSlots] = useState([]);
   const [formData, setFormData] = useState({
     date: '', timeSlot: '', reason: '', symptoms: '',
     patientName: user?.name || '', patientAge: '', patientGender: '',
   });
 
+  const availableDates = getNextDates();
+
+  useEffect(() => {
+    axiosInstance.get('/patient/doctors')
+      .then(res => {
+        const list = res.data.data || [];
+        const found = list.find(d => (d._id || d.id) === doctorId);
+        setDoctor(found || null);
+      })
+      .catch(() => setDoctor(null))
+      .finally(() => setLoading(false));
+  }, [doctorId]);
+
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
-  const handleConfirm = () => {
-    const apt = addAppointment(doctor, formData);
-    setBookedApt(apt);
-    setStep(4);
+  // Fetch booked slots when date changes
+  const handleDateSelect = async (date) => {
+    setFormData(prev => ({ ...prev, date, timeSlot: '' }));
+    try {
+      const res = await axiosInstance.get(`/appointments/booked-slots?doctorId=${doctor._id || doctor.id}&date=${date}`);
+      setBookedSlots(res.data.data?.bookedSlots || []);
+    } catch {
+      setBookedSlots([]);
+    }
   };
+
+  const handleConfirm = async () => {
+    setBooking(true);
+    setBookingError('');
+    try {
+      const apt = await addAppointment(doctor, formData);
+      setBookedApt(apt);
+      setStep(4);
+    } catch (err) {
+      setBookingError(err?.response?.data?.message || 'Booking failed. Please try again.');
+    } finally {
+      setBooking(false);
+    }
+  };
+
+  if (loading) return <div className="text-center py-12 text-gray-500">Loading doctor info...</div>;
+  if (!doctor) return (
+    <div className="text-center py-12">
+      <p className="text-gray-500 mb-4">Doctor not found.</p>
+      <Button variant="primary" onClick={() => navigate('/patient/doctors')}>Browse Doctors</Button>
+    </div>
+  );
+
+  const doctorId_ = doctor._id || doctor.id;
 
   return (
     <div className="max-w-4xl mx-auto">
       <h1 className="text-2xl lg:text-3xl font-bold text-gray-800 mb-6">Book Appointment</h1>
 
-      {/* Stepper */}
       {step < 4 && (
         <div className="mb-6">
           <div className="flex items-center justify-between">
@@ -75,7 +118,6 @@ const BookAppointmentPage = () => {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Doctor Info */}
         {step < 4 && (
           <Card className="lg:col-span-1 h-fit">
             <div className="text-center">
@@ -88,52 +130,59 @@ const BookAppointmentPage = () => {
               <p className="text-sm text-gray-500">{doctor.hospital}</p>
               <p className="text-2xl font-bold text-green-600 mt-3">₹{doctor.fee}</p>
               <p className="text-sm text-gray-500">Consultation Fee</p>
-              <p className="text-sm mt-2">⭐ {doctor.rating} • {doctor.experience}</p>
+              <p className="text-sm mt-2">⭐ {doctor.rating || 'N/A'} • {doctor.experience} {typeof doctor.experience === 'number' ? 'yrs' : ''}</p>
             </div>
           </Card>
         )}
 
         <div className={step < 4 ? 'lg:col-span-2' : 'lg:col-span-3'}>
-          {/* Step 1 - Date & Time */}
           {step === 1 && (
             <Card title="Select Date & Time">
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Select Date <span className="text-red-500">*</span></label>
                 <div className="grid grid-cols-3 gap-2">
                   {availableDates.map(date => (
-                    <button key={date} onClick={() => setFormData({ ...formData, date })}
+                    <button key={date} onClick={() => handleDateSelect(date)}
                       className={`p-3 rounded-lg border-2 text-sm transition-colors ${
                         formData.date === date ? 'border-primary-600 bg-primary-50 text-primary-700 font-medium' : 'border-gray-200 hover:border-primary-300'
                       }`}>
-                      {new Date(date).toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: 'numeric' })}
+                      {new Date(date + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: 'numeric' })}
                     </button>
                   ))}
                 </div>
               </div>
-
               {formData.date && (
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">Select Time <span className="text-red-500">*</span></label>
                   <div className="grid grid-cols-4 gap-2">
-                    {timeSlots.map(slot => (
-                      <button key={slot} onClick={() => setFormData({ ...formData, timeSlot: slot })}
-                        className={`p-2 rounded-lg border-2 text-sm transition-colors ${
-                          formData.timeSlot === slot ? 'border-primary-600 bg-primary-50 text-primary-700 font-medium' : 'border-gray-200 hover:border-primary-300'
-                        }`}>
-                        {slot}
-                      </button>
-                    ))}
+                    {timeSlots.map(slot => {
+                      const isBooked = bookedSlots.includes(slot);
+                      return (
+                        <button key={slot}
+                          onClick={() => !isBooked && setFormData({ ...formData, timeSlot: slot })}
+                          disabled={isBooked}
+                          className={`p-2 rounded-lg border-2 text-sm transition-colors ${
+                            isBooked
+                              ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed line-through'
+                              : formData.timeSlot === slot
+                              ? 'border-primary-600 bg-primary-50 text-primary-700 font-medium'
+                              : 'border-gray-200 hover:border-primary-300'
+                          }`}>
+                          {slot}
+                          {isBooked && <span className="block text-xs">Booked</span>}
+                        </button>
+                      );
+                    })}
                   </div>
+                  <p className="text-xs text-gray-400 mt-2">⬜ Available &nbsp; 🚫 Booked</p>
                 </div>
               )}
-
               <Button variant="primary" className="w-full mt-2" disabled={!formData.date || !formData.timeSlot} onClick={() => setStep(2)}>
                 Continue →
               </Button>
             </Card>
           )}
 
-          {/* Step 2 - Patient Details */}
           {step === 2 && (
             <Card title="Patient Details">
               <form onSubmit={(e) => { e.preventDefault(); setStep(3); }}>
@@ -144,9 +193,9 @@ const BookAppointmentPage = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Gender <span className="text-red-500">*</span></label>
                     <select name="patientGender" value={formData.patientGender} onChange={handleChange} className="input-field" required>
                       <option value="">Select</option>
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
-                      <option value="Other">Other</option>
+                      <option>Male</option>
+                      <option>Female</option>
+                      <option>Other</option>
                     </select>
                   </div>
                 </div>
@@ -166,34 +215,37 @@ const BookAppointmentPage = () => {
             </Card>
           )}
 
-          {/* Step 3 - Confirm */}
           {step === 3 && (
             <Card title="Confirm Appointment">
               <div className="space-y-4">
                 <div className="bg-gray-50 rounded-lg p-4 space-y-2 text-sm">
                   <div className="flex justify-between"><span className="text-gray-500">Doctor:</span><span className="font-medium">{doctor.name}</span></div>
                   <div className="flex justify-between"><span className="text-gray-500">Specialty:</span><span className="font-medium">{doctor.specialty}</span></div>
-                  <div className="flex justify-between"><span className="text-gray-500">Date:</span><span className="font-medium">{new Date(formData.date).toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-500">Date:</span><span className="font-medium">{new Date(formData.date + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span></div>
                   <div className="flex justify-between"><span className="text-gray-500">Time:</span><span className="font-medium">{formData.timeSlot}</span></div>
                   <div className="flex justify-between"><span className="text-gray-500">Patient:</span><span className="font-medium">{formData.patientName}</span></div>
                   <div className="flex justify-between"><span className="text-gray-500">Age / Gender:</span><span className="font-medium">{formData.patientAge} yrs / {formData.patientGender}</span></div>
                   <div className="flex justify-between"><span className="text-gray-500">Reason:</span><span className="font-medium">{formData.reason}</span></div>
                 </div>
-
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex justify-between items-center">
                   <span className="font-semibold text-gray-800">Consultation Fee</span>
                   <span className="text-2xl font-bold text-green-600">₹{doctor.fee}</span>
                 </div>
-
                 <div className="flex gap-3">
                   <Button variant="secondary" onClick={() => setStep(2)}>← Back</Button>
-                  <Button variant="primary" className="flex-1" onClick={handleConfirm}>✅ Confirm & Book</Button>
+                  <Button variant="primary" className="flex-1" onClick={handleConfirm} disabled={booking}>
+                    {booking ? '⏳ Booking...' : '✅ Confirm & Book'}
+                  </Button>
                 </div>
+                {bookingError && (
+                  <div className="mt-3 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+                    ❌ {bookingError}
+                  </div>
+                )}
               </div>
             </Card>
           )}
 
-          {/* Step 4 - Success */}
           {step === 4 && (
             <Card>
               <div className="text-center py-8">
@@ -201,7 +253,7 @@ const BookAppointmentPage = () => {
                 <h2 className="text-2xl font-bold text-green-600 mb-2">Appointment Booked!</h2>
                 <p className="text-gray-500 mb-6">Your appointment has been confirmed successfully.</p>
                 <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left space-y-2 text-sm">
-                  <p>🆔 Appointment ID: <span className="font-bold text-primary-600">#{bookedApt?.id}</span></p>
+                  <p>🆔 Appointment ID: <span className="font-bold text-primary-600">#{bookedApt?._id || bookedApt?.id}</span></p>
                   <p>👨⚕️ Doctor: <span className="font-medium">{doctor.name}</span></p>
                   <p>📅 Date: <span className="font-medium">{new Date(formData.date + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'long', month: 'long', day: 'numeric' })}</span></p>
                   <p>🕐 Time: <span className="font-medium">{formData.timeSlot}</span></p>

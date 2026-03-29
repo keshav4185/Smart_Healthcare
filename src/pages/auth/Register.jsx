@@ -4,13 +4,13 @@ import { useAuth } from '../../context/AuthContext';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import { USER_ROLES } from '../../constants/roles';
+import { getFieldError } from '../../utils/validation';
 
 const Register = () => {
   const [formData, setFormData] = useState({
     name: '', email: '', password: '', confirmPassword: '',
     role: USER_ROLES.PATIENT, phone: '',
-    // Doctor fields
-    specialty: '', licenseNumber: '', hospital: '', experience: '', education: '',
+    specialty: '', licenseNumber: '', hospital: '', experience: '', education: '', fee: '',
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -21,23 +21,24 @@ const Register = () => {
   const specialties = ['Cardiologist','Neurologist','Pediatrician','Orthopedic','Dermatologist','General Physician','Gynecologist','Psychiatrist','Ophthalmologist','ENT Specialist'];
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-    setErrors({ ...errors, [e.target.name]: '' });
+    const { name, value } = e.target;
+    // Block letters in phone field
+    if (name === 'phone' && /[a-zA-Z]/.test(value)) return;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    setErrors(prev => ({ ...prev, [name]: getFieldError(name, value, { ...formData, [name]: value }) }));
   };
 
   const validate = () => {
+    const fields = ['name', 'email', 'phone', 'password', 'confirmPassword'];
     const newErrors = {};
-    if (!formData.name.trim()) newErrors.name = 'Name is required';
-    if (!formData.email.trim()) newErrors.email = 'Email is required';
-    if (!formData.phone.trim()) newErrors.phone = 'Phone is required';
-    if (formData.password.length < 8) newErrors.password = 'Password must be at least 8 characters';
-    if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
+    fields.forEach(f => {
+      const err = getFieldError(f, formData[f], formData);
+      if (err) newErrors[f] = err;
+    });
     if (formData.role === USER_ROLES.DOCTOR) {
-      if (!formData.specialty) newErrors.specialty = 'Specialty is required';
-      if (!formData.licenseNumber.trim()) newErrors.licenseNumber = 'License number is required';
-      if (!formData.hospital.trim()) newErrors.hospital = 'Hospital name is required';
-      if (!formData.experience.trim()) newErrors.experience = 'Experience is required';
-      if (!formData.education.trim()) newErrors.education = 'Education is required';
+      ['specialty', 'licenseNumber', 'hospital', 'experience', 'education'].forEach(f => {
+        if (!formData[f]?.trim()) newErrors[f] = `${f.charAt(0).toUpperCase() + f.slice(1)} is required`;
+      });
     }
     return newErrors;
   };
@@ -122,7 +123,7 @@ const Register = () => {
 
           <Input label="Full Name" name="name" value={formData.name} onChange={handleChange} placeholder="Enter your full name" required error={errors.name} />
           <Input label="Email" type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Enter your email" required error={errors.email} />
-          <Input label="Phone" name="phone" value={formData.phone} onChange={handleChange} placeholder="+91 XXXXX XXXXX" required error={errors.phone} />
+          <Input label="Phone" name="phone" value={formData.phone} onChange={handleChange} placeholder="10-digit mobile number" required error={errors.phone} hint="Only 10 digits allowed, no letters" />
 
           {/* Doctor-specific fields */}
           {formData.role === USER_ROLES.DOCTOR && (
@@ -142,6 +143,7 @@ const Register = () => {
               <Input label="Hospital / Clinic Name" name="hospital" value={formData.hospital} onChange={handleChange} placeholder="e.g. City Hospital, Mumbai" required error={errors.hospital} />
               <Input label="Education" name="education" value={formData.education} onChange={handleChange} placeholder="e.g. MBBS, MD - Cardiology" required error={errors.education} />
               <Input label="Experience" name="experience" value={formData.experience} onChange={handleChange} placeholder="e.g. 5 years" required error={errors.experience} />
+              <Input label="Consultation Fee (₹)" type="number" name="fee" value={formData.fee} onChange={handleChange} placeholder="e.g. 500" required error={errors.fee} />
 
               <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
                 <p className="text-yellow-800 text-xs">⚠️ Your account will be reviewed by admin before activation.</p>
@@ -149,7 +151,7 @@ const Register = () => {
             </div>
           )}
 
-          <Input label="Password" type="password" name="password" value={formData.password} onChange={handleChange} placeholder="Minimum 6 characters" required error={errors.password} />
+          <Input label="Password" type="password" name="password" value={formData.password} onChange={handleChange} placeholder="Minimum 8 characters" required error={errors.password} hint="At least 8 characters" />
           <Input label="Confirm Password" type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} placeholder="Confirm your password" required error={errors.confirmPassword} />
 
           <Button type="submit" variant="primary" className="w-full mt-4" disabled={loading}>

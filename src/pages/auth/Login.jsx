@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
+import { getFieldError } from '../../utils/validation';
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
@@ -12,23 +13,26 @@ const Login = () => {
   const navigate = useNavigate();
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-    setErrors({ ...errors, [e.target.name]: '' });
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    setErrors(prev => ({ ...prev, [name]: getFieldError(name, value, { ...formData, [name]: value }) }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const emailErr = getFieldError('email', formData.email);
+    const passErr = getFieldError('password', formData.password);
+    if (emailErr || passErr) {
+      setErrors({ email: emailErr, password: passErr });
+      return;
+    }
     setLoading(true);
-
     const result = await login(formData);
-    
     if (result.success) {
-      const role = result.data.user.role;
-      navigate(`/${role}/dashboard`);
+      navigate(`/${result.data.user.role}/dashboard`);
     } else {
       setErrors({ general: result.error });
     }
-    
     setLoading(false);
   };
 
@@ -78,13 +82,6 @@ const Login = () => {
             {loading ? 'Signing in...' : 'Sign In'}
           </Button>
         </form>
-
-        <div className="mt-6 bg-gray-50 rounded-lg p-4 text-xs text-gray-500 space-y-1">
-          <p className="font-semibold text-gray-600 mb-2">Demo Credentials:</p>
-          <p>🧑 Patient: patient@demo.com / patient123</p>
-          <p>👨⚕️ Doctor: doctor@demo.com / doctor123</p>
-          <p>🛡️ Admin: admin@healthcare.com / admin@123</p>
-        </div>
 
         <p className="text-center text-gray-600 mt-4">
           Don't have an account?{' '}

@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { mockAuthService } from '../services/api/mockAuthService';
-import { secureStorage } from '../utils/secureStorage';
+import { authService } from '../services/api/authService';
 
 const AuthContext = createContext(null);
 
@@ -10,52 +9,65 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    const token = secureStorage.get('accessToken');
-    const userData = secureStorage.get('user');
-    if (token && userData) {
-      setUser(userData);
-      setIsAuthenticated(true);
+    try {
+      const token = localStorage.getItem('accessToken');
+      const userData = localStorage.getItem('user');
+      if (token && userData) {
+        setUser(JSON.parse(userData));
+        setIsAuthenticated(true);
+      }
+    } catch {
+      localStorage.clear();
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   const login = async (credentials) => {
     try {
-      const data = await mockAuthService.login(credentials);
-      secureStorage.set('accessToken', data.accessToken);
-      secureStorage.set('refreshToken', data.refreshToken);
-      secureStorage.set('user', data.user);
+      const data = await authService.login(credentials);
+      localStorage.setItem('accessToken', data.accessToken);
+      localStorage.setItem('refreshToken', data.refreshToken);
+      localStorage.setItem('user', JSON.stringify(data.user));
       setUser(data.user);
       setIsAuthenticated(true);
       return { success: true, data };
     } catch (error) {
-      return { success: false, error: error.message || 'Login failed' };
+      return { success: false, error: error.response?.data?.message || 'Invalid credentials' };
     }
   };
 
   const register = async (userData) => {
     try {
-      const data = await mockAuthService.register(userData);
+      const data = await authService.register(userData);
       return { success: true, data };
     } catch (error) {
-      return { success: false, error: error.message || 'Registration failed' };
+      return { success: false, error: error.response?.data?.message || 'Registration failed' };
     }
   };
 
   const logout = async () => {
     try {
-      await mockAuthService.logout();
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      secureStorage.clear();
+      const refreshToken = localStorage.getItem('refreshToken');
+      await authService.logout(refreshToken);
+    } catch {}
+    finally {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('user');
       setUser(null);
       setIsAuthenticated(false);
     }
   };
 
+  const updateUser = (updatedData) => {
+    const merged = { ...user, ...updatedData };
+    setUser(merged);
+    localStorage.setItem('user', JSON.stringify(merged));
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, isAuthenticated, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, isAuthenticated, login, register, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

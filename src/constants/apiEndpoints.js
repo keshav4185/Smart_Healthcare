@@ -38,4 +38,8 @@ export const API_ENDPOINTS = {
   // Diagnosis
   AI_DIAGNOSIS: '/diagnosis/predict',
   DIAGNOSIS_HISTORY: '/diagnosis/history',
+
+  // AI
+  AI_DIAGNOSE: '/ai/diagnose',
+  AI_SCAN_ANALYSIS: '/ai/scan-analysis',
 };

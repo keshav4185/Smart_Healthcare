@@ -1,27 +1,23 @@
 import axiosInstance from './axiosInstance';
-import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 
 export const authService = {
   login: async (credentials) => {
-    const response = await axiosInstance.post(API_ENDPOINTS.LOGIN, credentials);
-    return response.data;
+    const res = await axiosInstance.post('/auth/login', credentials);
+    return res.data.data;
   },
 
   register: async (userData) => {
-    const response = await axiosInstance.post(API_ENDPOINTS.REGISTER, userData);
-    return response.data;
+    const res = await axiosInstance.post('/auth/register', userData);
+    return res.data.data;
   },
 
-  logout: async () => {
-    const response = await axiosInstance.post(API_ENDPOINTS.LOGOUT);
-    localStorage.clear();
-    return response.data;
+  logout: async (refreshToken) => {
+    const res = await axiosInstance.post('/auth/logout', { refreshToken });
+    return res.data;
   },
 
-  refreshToken: async (refreshToken) => {
-    const response = await axiosInstance.post(API_ENDPOINTS.REFRESH_TOKEN, {
-      refreshToken,
-    });
-    return response.data;
+  refresh: async (refreshToken) => {
+    const res = await axiosInstance.post('/auth/refresh', { refreshToken });
+    return res.data.data;
   },
 };

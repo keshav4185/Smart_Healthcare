@@ -56,24 +56,30 @@ const AppointmentsPage = () => {
             <p className="text-center text-gray-500 py-8">No appointments found.</p>
           </Card>
         ) : (
-          filtered.map(apt => (
-            <Card key={apt.id}>
+          filtered.map(apt => {
+            const id = apt._id || apt.id;
+            const doctorName = apt.doctorId?.name || apt.doctorName;
+            const specialty = apt.doctorId?.specialty || apt.specialty;
+            const time = apt.timeSlot || apt.time;
+            const date = apt.date ? new Date(apt.date).toLocaleDateString('en-IN') : '';
+            return (
+            <Card key={id}>
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <h3 className="font-semibold text-gray-800 text-lg">{apt.doctorName}</h3>
+                    <h3 className="font-semibold text-gray-800 text-lg">{doctorName}</h3>
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColors[apt.status]}`}>
                       {apt.status}
                     </span>
                   </div>
-                  <p className="text-primary-600 text-sm font-medium">{apt.specialty}</p>
-                  <p className="text-gray-600 text-sm mt-1">📅 {apt.date} at {apt.time}</p>
+                  <p className="text-primary-600 text-sm font-medium">{specialty}</p>
+                  <p className="text-gray-600 text-sm mt-1">📅 {date} at {time}</p>
                   <p className="text-gray-500 text-sm">📝 {apt.reason}</p>
-                  <p className="text-green-600 text-sm font-medium">💰 ₹{apt.fee}</p>
+                  {apt.fee > 0 && <p className="text-green-600 text-sm font-medium">💰 ₹{apt.fee}</p>}
                 </div>
                 <div className="flex gap-2">
                   {apt.status === 'confirmed' && (
-                    <Button size="sm" variant="danger" onClick={() => setCancelId(apt.id)}>
+                    <Button size="sm" variant="danger" onClick={() => setCancelId(id)}>
                       Cancel
                     </Button>
                   )}
@@ -85,7 +91,8 @@ const AppointmentsPage = () => {
                 </div>
               </div>
             </Card>
-          ))
+            );
+          })
         )}
       </div>
 

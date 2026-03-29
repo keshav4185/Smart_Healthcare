@@ -4,6 +4,7 @@ import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import EmergencySOS from '../../components/common/EmergencySOS';
 import { useLanguage } from '../../context/LanguageContext';
+import axiosInstance from '../../services/api/axiosInstance';
 
 const getCategories = (t) => [
   { key: 'catHead', icon: '🧠', symptoms: ['headache','migraine','dizziness','memoryLoss','confusion','fainting'] },
@@ -87,14 +88,30 @@ const SymptomsPage = () => {
 
   const allSymptoms = selected.length > 0 ? selected : [];
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (allSymptoms.length === 0) return;
     setLoading(true);
-    setTimeout(() => {
-      setDiagnosis(diagnoseSymptoms(allSymptoms, severity));
+    try {
+      const { data } = await axiosInstance.post('/ai/diagnose', { symptoms: allSymptoms, severity, duration });
+      const ai = data.data;
+      setDiagnosis({
+        condition: ai.condition,
+        conditionMr: ai.condition,
+        specialist: ai.specialist,
+        specialistMr: ai.specialist,
+        urgency: ai.urgency === 'emergency' ? '🔴 Visit ER immediately' : ai.urgency === 'high' ? '🟠 Consult within 24 hours' : ai.urgency === 'medium' ? '🟡 Consult within 48 hours' : '🟢 Consult within a week',
+        urgencyMr: ai.urgency === 'emergency' ? '🔴 तातडीने रुग्णालयात जा' : ai.urgency === 'high' ? '🟠 २४ तासात डॉक्टरांना भेटा' : ai.urgency === 'medium' ? '🟡 ४८ तासात डॉक्टरांना भेटा' : '🟢 एका आठवड्यात डॉक्टरांना भेटा',
+        recommendations: Array.isArray(ai.recommendations) ? ai.recommendations.join(' ') : ai.recommendations,
+        recommendationsMr: Array.isArray(ai.recommendations) ? ai.recommendations.join(' ') : ai.recommendations,
+        color: ai.urgency === 'emergency' || ai.urgency === 'high' ? 'bg-red-50 border-red-200' : ai.urgency === 'medium' ? 'bg-yellow-50 border-yellow-200' : 'bg-green-50 border-green-200',
+      });
+    } catch {
+      const result = diagnoseSymptoms(allSymptoms, severity);
+      setDiagnosis(result);
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   const handleReset = () => {

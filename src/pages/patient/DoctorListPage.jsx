@@ -1,30 +1,40 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
-import { mockDoctors } from '../../services/api/mockAuthService';
+import axiosInstance from '../../services/api/axiosInstance';
 
 const DoctorListPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Auto-filter from URL params (e.g. /patient/doctors?specialty=Neurologist)
   const params = new URLSearchParams(location.search);
   const defaultSpecialty = params.get('specialty') || 'all';
 
+  const [doctors, setDoctors] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSpecialty, setSelectedSpecialty] = useState(defaultSpecialty);
 
-  const doctors = mockDoctors.filter(d => d.status === 'verified');
-  const specialties = ['all', ...new Set(mockDoctors.map(d => d.specialty))];
+  useEffect(() => {
+    axiosInstance.get('/patient/doctors')
+      .then(res => setDoctors(res.data.data || []))
+      .catch(() => setDoctors([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const specialties = ['all', ...new Set(doctors.map(d => d.specialty).filter(Boolean))];
 
   const filteredDoctors = doctors.filter(doctor => {
-    const matchesSearch = doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         doctor.specialty.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch =
+      doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (doctor.specialty || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesSpecialty = selectedSpecialty === 'all' || doctor.specialty === selectedSpecialty;
     return matchesSearch && matchesSpecialty;
   });
+
+  const getId = (d) => d._id || d.id;
 
   return (
     <div>
@@ -47,79 +57,74 @@ const DoctorListPage = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <select
-            value={selectedSpecialty}
-            onChange={(e) => setSelectedSpecialty(e.target.value)}
-            className="input-field"
-          >
-            {specialties.map(specialty => (
-              <option key={specialty} value={specialty}>
-                {specialty === 'all' ? 'All Specialties' : specialty}
-              </option>
+          <select value={selectedSpecialty} onChange={(e) => setSelectedSpecialty(e.target.value)} className="input-field">
+            {specialties.map(s => (
+              <option key={s} value={s}>{s === 'all' ? 'All Specialties' : s}</option>
             ))}
           </select>
         </div>
       </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-        {filteredDoctors.map(doctor => (
-          <Card key={doctor.id}>
-            <div className="text-center mb-4">
-              <div className="text-6xl mb-3">👨‍⚕️</div>
-              <div className="flex items-center justify-center gap-2 flex-wrap">
-                <h3 className="text-xl font-bold text-gray-800">{doctor.name}</h3>
-                <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full font-medium">✅ Verified</span>
+      {loading ? (
+        <Card><p className="text-center text-gray-500 py-8">Loading doctors...</p></Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+          {filteredDoctors.map(doctor => (
+            <Card key={getId(doctor)}>
+              <div className="text-center mb-4">
+                <div className="text-6xl mb-3">👨⚕️</div>
+                <div className="flex items-center justify-center gap-2 flex-wrap">
+                  <h3 className="text-xl font-bold text-gray-800">{doctor.name}</h3>
+                  <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full font-medium">✅ Verified</span>
+                </div>
+                <p className="text-primary-600 font-medium">{doctor.specialty}</p>
+                <p className="text-sm text-gray-600">{doctor.education}</p>
+                <span className={`inline-block mt-1 text-xs px-2 py-0.5 rounded-full font-medium ${
+                  doctor.available !== false ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
+                }`}>
+                  {doctor.available !== false ? '🟢 Available' : '🔴 Unavailable Today'}
+                </span>
               </div>
-              <p className="text-primary-600 font-medium">{doctor.specialty}</p>
-              <p className="text-sm text-gray-600">{doctor.education}</p>
-            </div>
 
-            <div className="space-y-2 mb-4">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">Experience:</span>
-                <span className="font-medium">{doctor.experience}</span>
+              <div className="space-y-2 mb-4">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">Experience:</span>
+                  <span className="font-medium">{doctor.experience} {typeof doctor.experience === 'number' ? 'years' : ''}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">Consultation:</span>
+                  <span className="font-medium text-green-600">₹{doctor.fee}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">Rating:</span>
+                  <span className="font-medium">⭐ {doctor.rating || 'N/A'}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">Hospital:</span>
+                  <span className="font-medium text-xs">{doctor.hospital}</span>
+                </div>
               </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">Consultation:</span>
-                <span className="font-medium text-green-600">₹{doctor.fee}</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">Rating:</span>
-                <span className="font-medium">⭐ {doctor.rating}</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">Hospital:</span>
-                <span className="font-medium text-xs">{doctor.hospital}</span>
-              </div>
-            </div>
 
-            <div className="flex gap-2">
-              <Button
-                variant="primary"
-                className="flex-1"
-                size="sm"
-                onClick={() => navigate(`/patient/doctor/${doctor.id}`)}
-              >
-                View Profile
-              </Button>
-              <Button
-                variant={doctor.available ? 'success' : 'secondary'}
-                className="flex-1"
-                size="sm"
-                disabled={!doctor.available}
-                onClick={() => navigate(`/patient/book-appointment/${doctor.id}`)}
-              >
-                {doctor.available ? 'Book Now' : 'Unavailable'}
-              </Button>
-            </div>
-          </Card>
-        ))}
-      </div>
+              <div className="flex gap-2">
+                <Button variant="primary" className="flex-1" size="sm" onClick={() => navigate(`/patient/doctor/${getId(doctor)}`)}>
+                  View Profile
+                </Button>
+                <Button
+                  variant={doctor.available !== false ? 'success' : 'secondary'}
+                  className="flex-1" size="sm"
+                  disabled={doctor.available === false}
+                  onClick={() => navigate(`/patient/book-appointment/${getId(doctor)}`)}
+                >
+                  {doctor.available !== false ? 'Book Now' : 'Unavailable'}
+                </Button>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
 
-      {filteredDoctors.length === 0 && (
-        <Card>
-          <p className="text-center text-gray-500 py-8">No verified doctors found</p>
-        </Card>
+      {!loading && filteredDoctors.length === 0 && (
+        <Card><p className="text-center text-gray-500 py-8">No verified doctors found</p></Card>
       )}
     </div>
   );
