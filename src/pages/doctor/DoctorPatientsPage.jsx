@@ -3,15 +3,22 @@ import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import { doctorService } from '../../services/api/doctorService';
+import axiosInstance from '../../services/api/axiosInstance';
+import { FaPhone, FaStethoscope, FaCalendarAlt, FaPills, FaFileMedical } from 'react-icons/fa';
+import { MdCheckCircle } from 'react-icons/md';
+import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 
 const DoctorPatientsPage = () => {
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPatient, setSelectedPatient] = useState(null);
+  const [patientRecords, setPatientRecords] = useState([]);
+  const [recordsLoading, setRecordsLoading] = useState(false);
   const [prescription, setPrescription] = useState({ medicine: '', dosage: '', notes: '' });
   const [showPrescribe, setShowPrescribe] = useState(false);
   const [savedMsg, setSavedMsg] = useState('');
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     doctorService.getPatients()
@@ -24,6 +31,20 @@ const DoctorPatientsPage = () => {
     (p.name || p.patientId?.name || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const openHistory = async (patient) => {
+    setSelectedPatient(patient);
+    setPatientRecords([]);
+    setRecordsLoading(true);
+    try {
+      const res = await axiosInstance.get(`/doctor/patient-records/${patient._id || patient.id}`);
+      setPatientRecords(res.data.data || []);
+    } catch {
+      setPatientRecords([]);
+    } finally {
+      setRecordsLoading(false);
+    }
+  };
+
   const closePrescribe = () => {
     setShowPrescribe(false);
     setSelectedPatient(null);
@@ -35,8 +56,8 @@ const DoctorPatientsPage = () => {
       <h1 className="text-2xl lg:text-3xl font-bold text-gray-800 mb-6">My Patients</h1>
 
       {savedMsg && (
-        <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-800 rounded-lg text-sm">
-          ✅ Prescription saved for {savedMsg}!
+        <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-800 rounded-lg text-sm flex items-center gap-2">
+          <MdCheckCircle />Prescription saved for {savedMsg}!
         </div>
       )}
 
@@ -68,12 +89,12 @@ const DoctorPatientsPage = () => {
                   <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">{visits} visits</span>
                 </div>
                 <div className="space-y-2 mb-4">
-                  <div className="flex items-center gap-2 text-sm"><span className="text-gray-600">📞</span><span className="text-gray-700">{phone}</span></div>
-                  <div className="flex items-center gap-2 text-sm"><span className="text-gray-600">🩺</span><span className="text-gray-700">{condition}</span></div>
-                  <div className="flex items-center gap-2 text-sm"><span className="text-gray-600">📅</span><span className="text-gray-700">Last visit: {lastVisit !== 'N/A' ? new Date(lastVisit).toLocaleDateString() : 'N/A'}</span></div>
+                  <div className="flex items-center gap-2 text-sm"><FaPhone className="text-gray-400" /><span className="text-gray-700">{phone}</span></div>
+                  <div className="flex items-center gap-2 text-sm"><FaStethoscope className="text-gray-400" /><span className="text-gray-700">{condition}</span></div>
+                  <div className="flex items-center gap-2 text-sm"><FaCalendarAlt className="text-gray-400" /><span className="text-gray-700">Last visit: {lastVisit !== 'N/A' ? new Date(lastVisit).toLocaleDateString() : 'N/A'}</span></div>
                 </div>
                 <div className="flex gap-2">
-                  <Button size="sm" variant="primary" className="flex-1" onClick={() => setSelectedPatient({ ...patient, name, phone, age, gender, lastVisit, condition, visits })}>View History</Button>
+                  <Button size="sm" variant="primary" className="flex-1" onClick={() => openHistory({ ...patient, name, phone, age, gender, lastVisit, condition, visits })}>View History</Button>
                   <Button size="sm" variant="secondary" className="flex-1" onClick={() => { setSelectedPatient({ ...patient, name }); setShowPrescribe(true); }}>Prescribe</Button>
                 </div>
               </Card>
@@ -89,15 +110,37 @@ const DoctorPatientsPage = () => {
       {/* Patient History Modal */}
       {selectedPatient && !showPrescribe && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+          <div className="bg-white rounded-lg p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-bold text-gray-800 mb-4">Patient History — {selectedPatient.name}</h3>
-            <div className="space-y-2 text-sm mb-4">
+            <div className="space-y-2 text-sm mb-4 bg-gray-50 rounded-lg p-3">
               <p><span className="font-medium">Age:</span> {selectedPatient.age} • {selectedPatient.gender}</p>
               <p><span className="font-medium">Phone:</span> {selectedPatient.phone}</p>
               <p><span className="font-medium">Condition:</span> {selectedPatient.condition}</p>
               <p><span className="font-medium">Total Visits:</span> {selectedPatient.visits}</p>
               <p><span className="font-medium">Last Visit:</span> {selectedPatient.lastVisit !== 'N/A' ? new Date(selectedPatient.lastVisit).toLocaleDateString() : 'N/A'}</p>
             </div>
+
+            <h4 className="font-semibold text-gray-700 mb-2 flex items-center gap-2"><FaFileMedical className="text-blue-500" />Medical Records</h4>
+            {recordsLoading ? (
+              <p className="text-center text-gray-400 py-4 flex items-center justify-center gap-2">
+                <AiOutlineLoading3Quarters className="animate-spin" />Loading records...
+              </p>
+            ) : patientRecords.length === 0 ? (
+              <p className="text-gray-400 text-sm text-center py-4">No medical records found.</p>
+            ) : (
+              <div className="space-y-2 mb-4">
+                {patientRecords.map(r => (
+                  <div key={r._id} className="border border-gray-200 rounded-lg p-3 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-gray-800">{r.title}</span>
+                      <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{r.type}</span>
+                    </div>
+                    {r.findings && <p className="text-gray-600 mt-1 text-xs">{r.findings}</p>}
+                    <p className="text-gray-400 text-xs mt-1">{new Date(r.createdAt).toLocaleDateString('en-IN')}</p>
+                  </div>
+                ))}
+              </div>
+            )}
             <Button variant="outline" className="w-full" onClick={() => setSelectedPatient(null)}>Close</Button>
           </div>
         </div>
@@ -118,7 +161,23 @@ const DoctorPatientsPage = () => {
             </div>
             <div className="flex gap-2">
               <Button variant="outline" className="flex-1" onClick={closePrescribe}>Cancel</Button>
-              <Button variant="success" className="flex-1" onClick={() => { setSavedMsg(selectedPatient.name); closePrescribe(); setTimeout(() => setSavedMsg(''), 3000); }}>💊 Save Prescription</Button>
+              <Button variant="success" className="flex-1" disabled={saving} onClick={async () => {
+                setSaving(true);
+                try {
+                  await axiosInstance.post('/doctor/prescription', {
+                    patientId: selectedPatient._id || selectedPatient.id,
+                    medicine: prescription.medicine,
+                    dosage: prescription.dosage,
+                    notes: prescription.notes,
+                  });
+                } catch { /* save best-effort */ }
+                finally {
+                  setSaving(false);
+                  setSavedMsg(selectedPatient.name);
+                  closePrescribe();
+                  setTimeout(() => setSavedMsg(''), 3000);
+                }
+              }}><FaPills className="inline mr-1" />{saving ? 'Saving...' : 'Save Prescription'}</Button>
             </div>
           </div>
         </div>

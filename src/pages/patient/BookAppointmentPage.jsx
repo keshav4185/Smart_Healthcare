@@ -6,6 +6,11 @@ import Input from '../../components/common/Input';
 import { useAuth } from '../../context/AuthContext';
 import { useAppointments } from '../../context/AppointmentContext';
 import axiosInstance from '../../services/api/axiosInstance';
+import { FaUserMd, FaStar, FaMoneyBillWave, FaCalendarAlt, FaClock, FaIdCard } from 'react-icons/fa';
+import { MdVerified } from 'react-icons/md';
+import { FiCheckCircle, FiXCircle } from 'react-icons/fi';
+import { AiOutlineLoading3Quarters } from 'react-icons/ai';
+import { GiPartyPopper } from 'react-icons/gi';
 
 const timeSlots = ['10:00 AM','10:30 AM','11:00 AM','11:30 AM','02:00 PM','02:30 PM','03:00 PM','03:30 PM'];
 
@@ -46,19 +51,14 @@ const BookAppointmentPage = () => {
   const availableDates = getNextDates();
 
   useEffect(() => {
-    axiosInstance.get('/patient/doctors')
-      .then(res => {
-        const list = res.data.data || [];
-        const found = list.find(d => (d._id || d.id) === doctorId);
-        setDoctor(found || null);
-      })
+    axiosInstance.get(`/patient/doctors/${doctorId}`)
+      .then(res => setDoctor(res.data.data || null))
       .catch(() => setDoctor(null))
       .finally(() => setLoading(false));
   }, [doctorId]);
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
-  // Fetch booked slots when date changes
   const handleDateSelect = async (date) => {
     setFormData(prev => ({ ...prev, date, timeSlot: '' }));
     try {
@@ -91,7 +91,8 @@ const BookAppointmentPage = () => {
     </div>
   );
 
-  const doctorId_ = doctor._id || doctor.id;
+  const doctorIdForBooking = doctor._id || doctor.id;
+  void doctorIdForBooking;
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -121,16 +122,18 @@ const BookAppointmentPage = () => {
         {step < 4 && (
           <Card className="lg:col-span-1 h-fit">
             <div className="text-center">
-              <div className="text-6xl mb-3">👨⚕️</div>
+              <div className="flex justify-center mb-3"><FaUserMd className="text-6xl text-primary-400" /></div>
               <div className="flex items-center justify-center gap-1 mb-1">
                 <h3 className="text-lg font-bold text-gray-800">{doctor.name}</h3>
-                <span className="text-green-600 text-xs">✅</span>
+                <MdVerified className="text-green-600" />
               </div>
               <p className="text-primary-600 font-medium">{doctor.specialty}</p>
               <p className="text-sm text-gray-500">{doctor.hospital}</p>
               <p className="text-2xl font-bold text-green-600 mt-3">₹{doctor.fee}</p>
               <p className="text-sm text-gray-500">Consultation Fee</p>
-              <p className="text-sm mt-2">⭐ {doctor.rating || 'N/A'} • {doctor.experience} {typeof doctor.experience === 'number' ? 'yrs' : ''}</p>
+              <p className="text-sm mt-2 flex items-center justify-center gap-1">
+                <FaStar className="text-yellow-400" />{doctor.rating || 'N/A'} • {doctor.experience} {typeof doctor.experience === 'number' ? 'yrs' : ''}
+              </p>
             </div>
           </Card>
         )}
@@ -174,7 +177,7 @@ const BookAppointmentPage = () => {
                       );
                     })}
                   </div>
-                  <p className="text-xs text-gray-400 mt-2">⬜ Available &nbsp; 🚫 Booked</p>
+                  <p className="text-xs text-gray-400 mt-2">Available / Booked</p>
                 </div>
               )}
               <Button variant="primary" className="w-full mt-2" disabled={!formData.date || !formData.timeSlot} onClick={() => setStep(2)}>
@@ -234,12 +237,14 @@ const BookAppointmentPage = () => {
                 <div className="flex gap-3">
                   <Button variant="secondary" onClick={() => setStep(2)}>← Back</Button>
                   <Button variant="primary" className="flex-1" onClick={handleConfirm} disabled={booking}>
-                    {booking ? '⏳ Booking...' : '✅ Confirm & Book'}
+                    {booking
+                      ? <><AiOutlineLoading3Quarters className="inline animate-spin mr-1" />Booking...</>
+                      : <><FiCheckCircle className="inline mr-1" />Confirm & Book</>}
                   </Button>
                 </div>
                 {bookingError && (
-                  <div className="mt-3 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
-                    ❌ {bookingError}
+                  <div className="mt-3 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm flex items-center gap-2">
+                    <FiXCircle />{bookingError}
                   </div>
                 )}
               </div>
@@ -249,15 +254,15 @@ const BookAppointmentPage = () => {
           {step === 4 && (
             <Card>
               <div className="text-center py-8">
-                <div className="text-7xl mb-4">🎉</div>
+                <div className="flex justify-center mb-4"><GiPartyPopper className="text-7xl text-green-400" /></div>
                 <h2 className="text-2xl font-bold text-green-600 mb-2">Appointment Booked!</h2>
                 <p className="text-gray-500 mb-6">Your appointment has been confirmed successfully.</p>
                 <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left space-y-2 text-sm">
-                  <p>🆔 Appointment ID: <span className="font-bold text-primary-600">#{bookedApt?._id || bookedApt?.id}</span></p>
-                  <p>👨⚕️ Doctor: <span className="font-medium">{doctor.name}</span></p>
-                  <p>📅 Date: <span className="font-medium">{new Date(formData.date + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'long', month: 'long', day: 'numeric' })}</span></p>
-                  <p>🕐 Time: <span className="font-medium">{formData.timeSlot}</span></p>
-                  <p>💰 Fee: <span className="font-medium text-green-600">₹{doctor.fee}</span></p>
+                  <p className="flex items-center gap-2"><FaIdCard className="text-gray-400" />Appointment ID: <span className="font-bold text-primary-600">#{bookedApt?._id || bookedApt?.id}</span></p>
+                  <p className="flex items-center gap-2"><FaUserMd className="text-gray-400" />Doctor: <span className="font-medium">{doctor.name}</span></p>
+                  <p className="flex items-center gap-2"><FaCalendarAlt className="text-gray-400" />Date: <span className="font-medium">{new Date(formData.date + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'long', month: 'long', day: 'numeric' })}</span></p>
+                  <p className="flex items-center gap-2"><FaClock className="text-gray-400" />Time: <span className="font-medium">{formData.timeSlot}</span></p>
+                  <p className="flex items-center gap-2"><FaMoneyBillWave className="text-gray-400" />Fee: <span className="font-medium text-green-600">₹{doctor.fee}</span></p>
                 </div>
                 <div className="flex gap-3">
                   <Button variant="primary" className="flex-1" onClick={() => navigate('/patient/appointments')}>View Appointments</Button>

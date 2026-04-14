@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect } from 'react';
 import { appointmentService } from '../services/api/appointmentService';
 import { useAuth } from './AuthContext';
@@ -17,14 +18,14 @@ export const AppointmentProvider = ({ children }) => {
         ? await appointmentService.getDoctorAppointments()
         : await appointmentService.getPatientAppointments();
       setAppointments(data || []);
-    } catch {}
+    } catch { /* ignore */ }
     finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchAppointments();
+    fetchAppointments(); // eslint-disable-line react-hooks/exhaustive-deps
   }, [isAuthenticated, user]);
 
   const addAppointment = async (doctor, formData) => {

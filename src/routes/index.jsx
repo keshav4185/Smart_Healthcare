@@ -6,6 +6,8 @@ import { USER_ROLES } from '../constants/roles';
 // Auth Pages
 import Login from '../pages/auth/Login';
 import Register from '../pages/auth/Register';
+import ForgotPasswordPage from '../pages/auth/ForgotPasswordPage';
+import ResetPasswordPage from '../pages/auth/ResetPasswordPage';
 
 // Patient Pages
 import PatientDashboard from '../pages/patient/PatientDashboard';
@@ -20,6 +22,7 @@ import MedicalRecordsPage from '../pages/patient/MedicalRecordsPage';
 import DoctorDashboard from '../pages/doctor/DoctorDashboard';
 import DoctorPatientsPage from '../pages/doctor/DoctorPatientsPage';
 import DoctorAppointmentsPage from '../pages/doctor/DoctorAppointmentsPage';
+import DoctorDiagnosesPage from '../pages/doctor/DoctorDiagnosesPage';
 
 // Admin Pages
 import AdminDashboard from '../pages/admin/AdminDashboard';
@@ -36,6 +39,14 @@ const router = createBrowserRouter([
   {
     path: '/register',
     element: <Register />,
+  },
+  {
+    path: '/forgot-password',
+    element: <ForgotPasswordPage />,
+  },
+  {
+    path: '/reset-password',
+    element: <ResetPasswordPage />,
   },
   {
     path: '/',
@@ -152,10 +163,7 @@ const router = createBrowserRouter([
         path: 'doctor/diagnoses',
         element: (
           <ProtectedRoute allowedRoles={[USER_ROLES.DOCTOR]}>
-            <div className="text-center py-12">
-              <h2 className="text-2xl font-bold">Diagnoses</h2>
-              <p className="text-gray-600 mt-2">Coming soon...</p>
-            </div>
+            <DoctorDiagnosesPage />
           </ProtectedRoute>
         ),
       },

@@ -2,6 +2,8 @@ import { useState } from 'react';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import { useAppointments } from '../../context/AppointmentContext';
+import { FaUserAlt, FaCalendarAlt, FaFileAlt, FaMoneyBillWave } from 'react-icons/fa';
+import { FiCheckCircle, FiXCircle } from 'react-icons/fi';
 
 const statusColors = {
   pending: 'bg-yellow-100 text-yellow-800',
@@ -85,28 +87,28 @@ const DoctorAppointmentsPage = () => {
                       </span>
                     </div>
                     <div className="space-y-1 text-sm text-gray-600">
-                      {patientAge !== 'N/A' && <p>👤 Age: {patientAge} years</p>}
-                      <p>📅 {date} at {time}</p>
-                      <p>📝 {apt.reason}</p>
-                      {apt.fee && <p>💰 ₹{apt.fee}</p>}
+                      {patientAge !== 'N/A' && <p className="flex items-center gap-1"><FaUserAlt className="text-gray-400 text-xs" />Age: {patientAge} years</p>}
+                      <p className="flex items-center gap-1"><FaCalendarAlt className="text-gray-400 text-xs" />{date} at {time}</p>
+                      <p className="flex items-center gap-1"><FaFileAlt className="text-gray-400 text-xs" />{apt.reason}</p>
+                      {apt.fee && <p className="flex items-center gap-1"><FaMoneyBillWave className="text-gray-400 text-xs" />₹{apt.fee}</p>}
                     </div>
                   </div>
 
                   <div className="flex flex-wrap gap-2">
                     {apt.status === 'pending' && (
                       <>
-                        <Button size="sm" variant="success" onClick={() => updateStatus(id, 'confirmed')}>✅ Accept</Button>
-                        <Button size="sm" variant="danger" onClick={() => updateStatus(id, 'cancelled')}>❌ Decline</Button>
+                        <Button size="sm" variant="success" onClick={() => updateStatus(id, 'confirmed')}><FiCheckCircle className="inline mr-1" />Accept</Button>
+                        <Button size="sm" variant="danger" onClick={() => updateStatus(id, 'cancelled')}><FiXCircle className="inline mr-1" />Decline</Button>
                       </>
                     )}
                     {apt.status === 'confirmed' && (
                       <>
-                        <Button size="sm" variant="primary" onClick={() => updateStatus(id, 'completed')}>✔ Complete</Button>
+                        <Button size="sm" variant="primary" onClick={() => updateStatus(id, 'completed')}><FiCheckCircle className="inline mr-1" />Complete</Button>
                         <Button size="sm" variant="danger" onClick={() => updateStatus(id, 'cancelled')}>Cancel</Button>
                       </>
                     )}
-                    {apt.status === 'completed' && <span className="text-sm text-blue-600 font-medium">✔ Done</span>}
-                    {apt.status === 'cancelled' && <span className="text-sm text-red-500 font-medium">✗ Cancelled</span>}
+                    {apt.status === 'completed' && <span className="text-sm text-blue-600 font-medium flex items-center gap-1"><FiCheckCircle />Done</span>}
+                    {apt.status === 'cancelled' && <span className="text-sm text-red-500 font-medium flex items-center gap-1"><FiXCircle />Cancelled</span>}
                   </div>
                 </div>
               </Card>

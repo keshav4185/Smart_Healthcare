@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect } from 'react';
 import { authService } from '../services/api/authService';
 
@@ -33,13 +34,17 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(true);
       return { success: true, data };
     } catch (error) {
-      return { success: false, error: error.response?.data?.message || 'Invalid credentials' };
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Invalid credentials',
+        statusCode: error.response?.status,
+      };
     }
   };
 
-  const register = async (userData) => {
+  const register = async (userData, files = {}) => {
     try {
-      const data = await authService.register(userData);
+      const data = await authService.register(userData, files);
       return { success: true, data };
     } catch (error) {
       return { success: false, error: error.response?.data?.message || 'Registration failed' };
@@ -50,7 +55,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const refreshToken = localStorage.getItem('refreshToken');
       await authService.logout(refreshToken);
-    } catch {}
+    } catch { /* ignore */ }
     finally {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');

@@ -19,7 +19,7 @@ export const userService = {
   uploadPhoto: async (file) => {
     const formData = new FormData();
     formData.append('photo', file);
-    const res = await axiosInstance.post('/user/upload-photo', formData, {
+    const res = await axiosInstance.post('/upload/photo', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     return res.data.data;

@@ -1,22 +1,28 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { GiBrain, GiStomach, GiBrokenBone } from 'react-icons/gi';
+import { FaEye, FaHeartbeat, FaTint, FaThermometerHalf, FaUserMd } from 'react-icons/fa';
+import { FaEarListen } from 'react-icons/fa6';
+import { MdSick, MdCircle } from 'react-icons/md';
+import { RiMentalHealthLine } from 'react-icons/ri';
+import { FiPlus, FiCheckCircle, FiAlertTriangle } from 'react-icons/fi';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import EmergencySOS from '../../components/common/EmergencySOS';
 import { useLanguage } from '../../context/LanguageContext';
 import axiosInstance from '../../services/api/axiosInstance';
 
-const getCategories = (t) => [
-  { key: 'catHead', icon: '🧠', symptoms: ['headache','migraine','dizziness','memoryLoss','confusion','fainting'] },
-  { key: 'catEyes', icon: '👁️', symptoms: ['blurredVision','eyePain','redEyes','wateryEyes','itchyEyes','doubleVision'] },
-  { key: 'catENT', icon: '👂', symptoms: ['earPain','hearingLoss','runnyNose','blockedNose','soreThroat','sneezing'] },
-  { key: 'catChest', icon: '❤️', symptoms: ['chestPain','palpitations','shortnessOfBreath','irregularHeartbeat','chestTightness'] },
-  { key: 'catStomach', icon: '🫃', symptoms: ['stomachPain','nausea','vomiting','diarrhea','constipation','bloating','acidity'] },
-  { key: 'catSkin', icon: '🩹', symptoms: ['rash','itching','drySkin','swelling','bruising','skinDiscoloration'] },
-  { key: 'catBones', icon: '🦴', symptoms: ['backPain','jointPain','muscleWeakness','legPain','neckPain','kneePain'] },
-  { key: 'catGeneral', icon: '🌡️', symptoms: ['fever','fatigue','weightLoss','weightGain','nightSweats','lossOfAppetite','chills'] },
-  { key: 'catMental', icon: '🧘', symptoms: ['anxiety','depression','insomnia','stress','moodSwings','panicAttacks'] },
-  { key: 'catUrinary', icon: '💧', symptoms: ['frequentUrination','burningUrination','bloodInUrine','lowerAbdomenPain'] },
+const getCategories = () => [
+  { key: 'catHead', icon: <GiBrain className="inline text-purple-500" />, symptoms: ['headache','migraine','dizziness','memoryLoss','confusion','fainting'] },
+  { key: 'catEyes', icon: <FaEye className="inline text-blue-400" />, symptoms: ['blurredVision','eyePain','redEyes','wateryEyes','itchyEyes','doubleVision'] },
+  { key: 'catENT', icon: <FaEarListen className="inline text-yellow-500" />, symptoms: ['earPain','hearingLoss','runnyNose','blockedNose','soreThroat','sneezing'] },
+  { key: 'catChest', icon: <FaHeartbeat className="inline text-red-500" />, symptoms: ['chestPain','palpitations','shortnessOfBreath','irregularHeartbeat','chestTightness'] },
+  { key: 'catStomach', icon: <GiStomach className="inline text-orange-400" />, symptoms: ['stomachPain','nausea','vomiting','diarrhea','constipation','bloating','acidity'] },
+  { key: 'catSkin', icon: <MdSick className="inline text-pink-400" />, symptoms: ['rash','itching','drySkin','swelling','bruising','skinDiscoloration'] },
+  { key: 'catBones', icon: <GiBrokenBone className="inline text-gray-500" />, symptoms: ['backPain','jointPain','muscleWeakness','legPain','neckPain','kneePain'] },
+  { key: 'catGeneral', icon: <FaThermometerHalf className="inline text-red-400" />, symptoms: ['fever','fatigue','weightLoss','weightGain','nightSweats','lossOfAppetite','chills'] },
+  { key: 'catMental', icon: <RiMentalHealthLine className="inline text-teal-500" />, symptoms: ['anxiety','depression','insomnia','stress','moodSwings','panicAttacks'] },
+  { key: 'catUrinary', icon: <FaTint className="inline text-blue-500" />, symptoms: ['frequentUrination','burningUrination','bloodInUrine','lowerAbdomenPain'] },
 ];
 
 const diagnoseSymptoms = (selected, severity) => {
@@ -24,36 +30,36 @@ const diagnoseSymptoms = (selected, severity) => {
   const has = (...words) => words.some(w => s.some(sym => sym.includes(w.toLowerCase())));
 
   if (has('chest pain', 'छातीत दुखणे', 'palpitations', 'धडधड', 'irregular heartbeat', 'chest tightness'))
-    return { condition: 'Possible Cardiac Issue / Angina', conditionMr: 'हृदयविकाराची शक्यता', specialist: 'Cardiologist', specialistMr: 'हृदयरोगतज्ञ', urgency: severity === 'critical' || severity === 'high' ? '🔴 Visit ER immediately' : '🟡 Consult doctor within 24 hours', urgencyMr: severity === 'critical' || severity === 'high' ? '🔴 तातडीने रुग्णालयात जा' : '🟡 २४ तासात डॉक्टरांना भेटा', recommendations: 'Avoid physical exertion. Take rest. Monitor blood pressure. Consult a Cardiologist immediately.', recommendationsMr: 'शारीरिक श्रम टाळा. विश्रांती घ्या. रक्तदाब तपासा. हृदयरोगतज्ञांना भेटा.', color: 'bg-red-50 border-red-200' };
+    return { condition: 'Possible Cardiac Issue / Angina', conditionMr: 'हृदयविकाराची शक्यता', specialist: 'Cardiologist', specialistMr: 'हृदयरोगतज्ञ', urgency: severity === 'critical' || severity === 'high' ? 'ER Visit ER immediately' : 'Consult doctor within 24 hours', urgencyMr: severity === 'critical' || severity === 'high' ? 'तातडीने रुग्णालयात जा' : '२४ तासात डॉक्टरांना भेटा', urgencyLevel: severity === 'critical' || severity === 'high' ? 'red' : 'yellow', recommendations: 'Avoid physical exertion. Take rest. Monitor blood pressure. Consult a Cardiologist immediately.', recommendationsMr: 'शारीरिक श्रम टाळा. विश्रांती घ्या. रक्तदाब तपासा. हृदयरोगतज्ञांना भेटा.', color: 'bg-red-50 border-red-200' };
 
   if (has('shortness of breath', 'श्वास घ्यायला त्रास', 'chest tightness'))
-    return { condition: 'Respiratory Issue / Asthma', conditionMr: 'श्वसन समस्या / दमा', specialist: 'Pulmonologist', specialistMr: 'फुफ्फुसतज्ञ', urgency: '🔴 Seek immediate care', urgencyMr: '🔴 तातडीने उपचार घ्या', recommendations: 'Use inhaler if prescribed. Avoid dust/smoke. Stay in ventilated area.', recommendationsMr: 'इनहेलर वापरा. धूळ/धूर टाळा. हवेशीर जागी राहा.', color: 'bg-red-50 border-red-200' };
+    return { condition: 'Respiratory Issue / Asthma', conditionMr: 'श्वसन समस्या / दमा', specialist: 'Pulmonologist', specialistMr: 'फुफ्फुसतज्ञ', urgency: 'Seek immediate care', urgencyMr: 'तातडीने उपचार घ्या', urgencyLevel: 'red', recommendations: 'Use inhaler if prescribed. Avoid dust/smoke. Stay in ventilated area.', recommendationsMr: 'इनहेलर वापरा. धूळ/धूर टाळा. हवेशीर जागी राहा.', color: 'bg-red-50 border-red-200' };
 
   if (has('headache', 'डोकेदुखी', 'migraine', 'मायग्रेन', 'dizziness', 'चक्कर', 'fainting', 'बेशुद्ध'))
-    return { condition: 'Neurological Issue / Migraine', conditionMr: 'मज्जातंतू समस्या / मायग्रेन', specialist: 'Neurologist', specialistMr: 'मज्जातंत्रतज्ञ', urgency: '🟡 Consult within 48 hours', urgencyMr: '🟡 ४८ तासात डॉक्टरांना भेटा', recommendations: 'Rest in dark quiet room. Stay hydrated. Avoid screen time.', recommendationsMr: 'अंधाऱ्या शांत खोलीत विश्रांती घ्या. पाणी प्या. स्क्रीन टाळा.', color: 'bg-yellow-50 border-yellow-200' };
+    return { condition: 'Neurological Issue / Migraine', conditionMr: 'मज्जातंतू समस्या / मायग्रेन', specialist: 'Neurologist', specialistMr: 'मज्जातंत्रतज्ञ', urgency: 'Consult within 48 hours', urgencyMr: '४८ तासात डॉक्टरांना भेटा', urgencyLevel: 'yellow', recommendations: 'Rest in dark quiet room. Stay hydrated. Avoid screen time.', recommendationsMr: 'अंधाऱ्या शांत खोलीत विश्रांती घ्या. पाणी प्या. स्क्रीन टाळा.', color: 'bg-yellow-50 border-yellow-200' };
 
   if (has('fever', 'ताप', 'chills', 'थंडी', 'fatigue', 'थकवा'))
-    return { condition: 'Viral Infection / Flu', conditionMr: 'विषाणू संसर्ग / फ्लू', specialist: 'General Physician', specialistMr: 'सामान्य डॉक्टर', urgency: '🟢 Consult within 2-3 days', urgencyMr: '🟢 २-३ दिवसात डॉक्टरांना भेटा', recommendations: 'Stay hydrated. Take rest. Use paracetamol for fever. Avoid cold food.', recommendationsMr: 'पाणी प्या. विश्रांती घ्या. तापासाठी पॅरासिटामॉल घ्या. थंड अन्न टाळा.', color: 'bg-green-50 border-green-200' };
+    return { condition: 'Viral Infection / Flu', conditionMr: 'विषाणू संसर्ग / फ्लू', specialist: 'General Physician', specialistMr: 'सामान्य डॉक्टर', urgency: 'Consult within 2-3 days', urgencyMr: '२-३ दिवसात डॉक्टरांना भेटा', urgencyLevel: 'green', recommendations: 'Stay hydrated. Take rest. Use paracetamol for fever. Avoid cold food.', recommendationsMr: 'पाणी प्या. विश्रांती घ्या. तापासाठी पॅरासिटामॉल घ्या. थंड अन्न टाळा.', color: 'bg-green-50 border-green-200' };
 
   if (has('stomach pain', 'पोटदुखी', 'nausea', 'मळमळ', 'vomiting', 'उलटी', 'diarrhea', 'जुलाब', 'acidity', 'आम्लपित्त'))
-    return { condition: 'Gastritis / Digestive Issue', conditionMr: 'जठराची सूज / पचन समस्या', specialist: 'Gastroenterologist', specialistMr: 'पचनतज्ञ', urgency: '🟢 Consult within 2-3 days', urgencyMr: '🟢 २-३ दिवसात डॉक्टरांना भेटा', recommendations: 'Drink ORS. Eat light food. Avoid spicy food. Rest well.', recommendationsMr: 'ORS प्या. हलके जेवण खा. तिखट टाळा. विश्रांती घ्या.', color: 'bg-green-50 border-green-200' };
+    return { condition: 'Gastritis / Digestive Issue', conditionMr: 'जठराची सूज / पचन समस्या', specialist: 'Gastroenterologist', specialistMr: 'पचनतज्ञ', urgency: 'Consult within 2-3 days', urgencyMr: '२-३ दिवसात डॉक्टरांना भेटा', urgencyLevel: 'green', recommendations: 'Drink ORS. Eat light food. Avoid spicy food. Rest well.', recommendationsMr: 'ORS प्या. हलके जेवण खा. तिखट टाळा. विश्रांती घ्या.', color: 'bg-green-50 border-green-200' };
 
   if (has('back pain', 'पाठदुखी', 'joint pain', 'सांधेदुखी', 'knee pain', 'गुडघेदुखी', 'neck pain', 'मानदुखी'))
-    return { condition: 'Musculoskeletal Pain', conditionMr: 'स्नायू / हाडांचे दुखणे', specialist: 'Orthopedic', specialistMr: 'हाडांचे तज्ञ', urgency: '🟢 Consult within a week', urgencyMr: '🟢 एका आठवड्यात डॉक्टरांना भेटा', recommendations: 'Apply hot/cold compress. Avoid heavy lifting. Light stretching.', recommendationsMr: 'गरम/थंड शेक द्या. जड उचलणे टाळा. हलके व्यायाम करा.', color: 'bg-green-50 border-green-200' };
+    return { condition: 'Musculoskeletal Pain', conditionMr: 'स्नायू / हाडांचे दुखणे', specialist: 'Orthopedic', specialistMr: 'हाडांचे तज्ञ', urgency: 'Consult within a week', urgencyMr: 'एका आठवड्यात डॉक्टरांना भेटा', urgencyLevel: 'green', recommendations: 'Apply hot/cold compress. Avoid heavy lifting. Light stretching.', recommendationsMr: 'गरम/थंड शेक द्या. जड उचलणे टाळा. हलके व्यायाम करा.', color: 'bg-green-50 border-green-200' };
 
   if (has('rash', 'पुरळ', 'itching', 'खाज', 'dry skin', 'कोरडी त्वचा'))
-    return { condition: 'Skin Allergy / Dermatitis', conditionMr: 'त्वचा ऍलर्जी', specialist: 'Dermatologist', specialistMr: 'त्वचारोगतज्ञ', urgency: '🟢 Consult within a week', urgencyMr: '🟢 एका आठवड्यात डॉक्टरांना भेटा', recommendations: 'Avoid allergens. Use mild soap. Apply calamine lotion.', recommendationsMr: 'ऍलर्जी कारणे टाळा. सौम्य साबण वापरा. कॅलामाइन लोशन लावा.', color: 'bg-green-50 border-green-200' };
+    return { condition: 'Skin Allergy / Dermatitis', conditionMr: 'त्वचा ऍलर्जी', specialist: 'Dermatologist', specialistMr: 'त्वचारोगतज्ञ', urgency: 'Consult within a week', urgencyMr: 'एका आठवड्यात डॉक्टरांना भेटा', urgencyLevel: 'green', recommendations: 'Avoid allergens. Use mild soap. Apply calamine lotion.', recommendationsMr: 'ऍलर्जी कारणे टाळा. सौम्य साबण वापरा. कॅलामाइन लोशन लावा.', color: 'bg-green-50 border-green-200' };
 
   if (has('anxiety', 'चिंता', 'depression', 'नैराश्य', 'insomnia', 'झोप न येणे', 'panic', 'घाबरणे'))
-    return { condition: 'Mental Health Issue', conditionMr: 'मानसिक आरोग्य समस्या', specialist: 'Psychiatrist', specialistMr: 'मनोचिकित्सक', urgency: '🟡 Consult within a week', urgencyMr: '🟡 एका आठवड्यात डॉक्टरांना भेटा', recommendations: 'Practice meditation. Talk to someone. Avoid stress. Seek professional help.', recommendationsMr: 'ध्यान करा. कोणाशी बोला. ताण टाळा. तज्ञांची मदत घ्या.', color: 'bg-yellow-50 border-yellow-200' };
+    return { condition: 'Mental Health Issue', conditionMr: 'मानसिक आरोग्य समस्या', specialist: 'Psychiatrist', specialistMr: 'मनोचिकित्सक', urgency: 'Consult within a week', urgencyMr: 'एका आठवड्यात डॉक्टरांना भेटा', urgencyLevel: 'yellow', recommendations: 'Practice meditation. Talk to someone. Avoid stress. Seek professional help.', recommendationsMr: 'ध्यान करा. कोणाशी बोला. ताण टाळा. तज्ञांची मदत घ्या.', color: 'bg-yellow-50 border-yellow-200' };
 
   if (has('frequent urination', 'वारंवार लघवी', 'burning urination', 'लघवीत जळजळ'))
-    return { condition: 'Urinary Tract Infection (UTI)', conditionMr: 'मूत्रमार्ग संसर्ग (UTI)', specialist: 'Urologist', specialistMr: 'मूत्रतज्ञ', urgency: '🟡 Consult within 48 hours', urgencyMr: '🟡 ४८ तासात डॉक्टरांना भेटा', recommendations: 'Drink plenty of water. Avoid holding urine. Consult Urologist.', recommendationsMr: 'भरपूर पाणी प्या. लघवी रोखू नका. मूत्रतज्ञांना भेटा.', color: 'bg-yellow-50 border-yellow-200' };
+    return { condition: 'Urinary Tract Infection (UTI)', conditionMr: 'मूत्रमार्ग संसर्ग (UTI)', specialist: 'Urologist', specialistMr: 'मूत्रतज्ञ', urgency: 'Consult within 48 hours', urgencyMr: '४८ तासात डॉक्टरांना भेटा', urgencyLevel: 'yellow', recommendations: 'Drink plenty of water. Avoid holding urine. Consult Urologist.', recommendationsMr: 'भरपूर पाणी प्या. लघवी रोखू नका. मूत्रतज्ञांना भेटा.', color: 'bg-yellow-50 border-yellow-200' };
 
   if (has('sore throat', 'घसा दुखणे', 'runny nose', 'नाक वाहणे', 'ear pain', 'कानात दुखणे'))
-    return { condition: 'ENT Infection / Common Cold', conditionMr: 'ENT संसर्ग / सर्दी', specialist: 'ENT Specialist', specialistMr: 'ENT तज्ञ', urgency: '🟢 Consult within 2-3 days', urgencyMr: '🟢 २-३ दिवसात डॉक्टरांना भेटा', recommendations: 'Gargle with warm salt water. Steam inhalation. Stay warm.', recommendationsMr: 'कोमट मिठाच्या पाण्याने गुळण्या करा. वाफ घ्या. उबदार राहा.', color: 'bg-green-50 border-green-200' };
+    return { condition: 'ENT Infection / Common Cold', conditionMr: 'ENT संसर्ग / सर्दी', specialist: 'ENT Specialist', specialistMr: 'ENT तज्ञ', urgency: 'Consult within 2-3 days', urgencyMr: '२-३ दिवसात डॉक्टरांना भेटा', urgencyLevel: 'green', recommendations: 'Gargle with warm salt water. Steam inhalation. Stay warm.', recommendationsMr: 'कोमट मिठाच्या पाण्याने गुळण्या करा. वाफ घ्या. उबदार राहा.', color: 'bg-green-50 border-green-200' };
 
-  return { condition: 'General Health Issue', conditionMr: 'सामान्य आरोग्य समस्या', specialist: 'General Physician', specialistMr: 'सामान्य डॉक्टर', urgency: '🟢 Consult within a week', urgencyMr: '🟢 एका आठवड्यात डॉक्टरांना भेटा', recommendations: 'Take rest. Stay hydrated. Eat nutritious food. Consult a General Physician.', recommendationsMr: 'विश्रांती घ्या. पाणी प्या. पौष्टिक अन्न खा. डॉक्टरांना भेटा.', color: 'bg-green-50 border-green-200' };
+  return { condition: 'General Health Issue', conditionMr: 'सामान्य आरोग्य समस्या', specialist: 'General Physician', specialistMr: 'सामान्य डॉक्टर', urgency: 'Consult within a week', urgencyMr: 'एका आठवड्यात डॉक्टरांना भेटा', urgencyLevel: 'green', recommendations: 'Take rest. Stay hydrated. Eat nutritious food. Consult a General Physician.', recommendationsMr: 'विश्रांती घ्या. पाणी प्या. पौष्टिक अन्न खा. डॉक्टरांना भेटा.', color: 'bg-green-50 border-green-200' };
 };
 
 const SymptomsPage = () => {
@@ -66,8 +72,9 @@ const SymptomsPage = () => {
   const [diagnosis, setDiagnosis] = useState(null);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
+  const [suggestedDoctors, setSuggestedDoctors] = useState([]);
 
-  const categories = getCategories(t);
+  const categories = getCategories();
 
   const toggleSymptom = (key) => {
     const label = t(key);
@@ -92,31 +99,57 @@ const SymptomsPage = () => {
     e.preventDefault();
     if (allSymptoms.length === 0) return;
     setLoading(true);
+    setSuggestedDoctors([]);
     try {
       const { data } = await axiosInstance.post('/ai/diagnose', { symptoms: allSymptoms, severity, duration });
       const ai = data.data;
-      setDiagnosis({
+      const diagnosisResult = {
         condition: ai.condition,
         conditionMr: ai.condition,
         specialist: ai.specialist,
         specialistMr: ai.specialist,
-        urgency: ai.urgency === 'emergency' ? '🔴 Visit ER immediately' : ai.urgency === 'high' ? '🟠 Consult within 24 hours' : ai.urgency === 'medium' ? '🟡 Consult within 48 hours' : '🟢 Consult within a week',
-        urgencyMr: ai.urgency === 'emergency' ? '🔴 तातडीने रुग्णालयात जा' : ai.urgency === 'high' ? '🟠 २४ तासात डॉक्टरांना भेटा' : ai.urgency === 'medium' ? '🟡 ४८ तासात डॉक्टरांना भेटा' : '🟢 एका आठवड्यात डॉक्टरांना भेटा',
-        recommendations: Array.isArray(ai.recommendations) ? ai.recommendations.join(' ') : ai.recommendations,
-        recommendationsMr: Array.isArray(ai.recommendations) ? ai.recommendations.join(' ') : ai.recommendations,
+        urgency: ai.urgency === 'emergency' ? 'Visit ER immediately' : ai.urgency === 'high' ? 'Consult within 24 hours' : ai.urgency === 'medium' ? 'Consult within 48 hours' : 'Consult within a week',
+        urgencyMr: ai.urgency === 'emergency' ? 'तातडीने रुग्णालयात जा' : ai.urgency === 'high' ? '२४ तासात डॉक्टरांना भेटा' : ai.urgency === 'medium' ? '४८ तासात डॉक्टरांना भेटा' : 'एका आठवड्यात डॉक्टरांना भेटा',
+        urgencyLevel: ai.urgency === 'emergency' || ai.urgency === 'high' ? 'red' : ai.urgency === 'medium' ? 'yellow' : 'green',
+        recommendations: Array.isArray(ai.recommendations) ? ai.recommendations : [ai.recommendations],
+        recommendationsMr: Array.isArray(ai.recommendations) ? ai.recommendations : [ai.recommendations],
+        home_therapy: Array.isArray(ai.home_therapy) ? ai.home_therapy : [],
+        home_therapy_mr: Array.isArray(ai.home_therapy_mr) ? ai.home_therapy_mr : [],
         color: ai.urgency === 'emergency' || ai.urgency === 'high' ? 'bg-red-50 border-red-200' : ai.urgency === 'medium' ? 'bg-yellow-50 border-yellow-200' : 'bg-green-50 border-green-200',
-      });
+      };
+      setDiagnosis(diagnosisResult);
+      // Fetch matching doctors based on specialist
+      fetchSuggestedDoctors(ai.specialist || '');
     } catch {
       const result = diagnoseSymptoms(allSymptoms, severity);
       setDiagnosis(result);
+      fetchSuggestedDoctors(result.specialist || '');
     } finally {
       setLoading(false);
     }
   };
 
+  const fetchSuggestedDoctors = async (specialist) => {
+    if (!specialist) return;
+    try {
+      const res = await axiosInstance.get('/patient/doctors');
+      const allDoctors = res.data.data || [];
+      const keyword = specialist.toLowerCase();
+      const matched = allDoctors.filter(d => {
+        if (!d.specialty) return false;
+        const specialty = d.specialty.toLowerCase();
+        return specialty.split(' ').some(word => word.length > 3 && keyword.includes(word))
+          || keyword.split(' ').some(word => word.length > 3 && specialty.includes(word));
+      });
+      setSuggestedDoctors(matched.slice(0, 3));
+    } catch {
+      setSuggestedDoctors([]);
+    }
+  };
+
   const handleReset = () => {
     setSelected([]); setTypedSymptom(''); setDuration('');
-    setSeverity('moderate'); setDiagnosis(null); setSearch('');
+    setSeverity('moderate'); setDiagnosis(null); setSearch(''); setSuggestedDoctors([]);
   };
 
   const filteredCategories = categories.map(cat => ({
@@ -149,7 +182,7 @@ const SymptomsPage = () => {
                 className="input-field flex-1"
               />
               <Button variant="primary" onClick={addTyped} disabled={!typedSymptom.trim()}>
-                + {isMarathi ? 'जोडा' : 'Add'}
+                <FiPlus className="inline mr-1" />{isMarathi ? 'जोडा' : 'Add'}
               </Button>
             </div>
             <p className="text-xs text-gray-400 mt-1">{isMarathi ? 'Enter दाबा किंवा + बटण दाबा' : 'Press Enter or click + to add'}</p>
@@ -175,7 +208,7 @@ const SymptomsPage = () => {
           {selected.length > 0 && (
             <Card>
               <div className="flex items-center justify-between mb-3">
-                <p className="font-semibold text-gray-700">✅ {t('selectedSymptoms')} ({selected.length})</p>
+                <p className="font-semibold text-gray-700"><FiCheckCircle className="inline mr-1 text-green-500" />{t('selectedSymptoms')} ({selected.length})</p>
                 <button onClick={() => setSelected([])} className="text-xs text-red-500 hover:underline">{t('clearAll')}</button>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -192,7 +225,7 @@ const SymptomsPage = () => {
           {/* Symptom Categories */}
           {filteredCategories.map(cat => (
             <Card key={cat.key}>
-              <p className="font-semibold text-gray-700 mb-3">{cat.icon} {t(cat.key)}</p>
+              <p className="font-semibold text-gray-700 mb-3 flex items-center gap-2">{cat.icon} {t(cat.key)}</p>
               <div className="flex flex-wrap gap-2">
                 {cat.symptoms.map(key => {
                   const label = t(key);
@@ -267,23 +300,56 @@ const SymptomsPage = () => {
               <div className="space-y-3">
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                   <p className="text-xs text-blue-500 font-medium mb-1">{t('possibleCondition')}</p>
-                  <p className="text-blue-900 font-bold">{isMarathi ? diagnosis.conditionMr : diagnosis.condition}</p>
+                  <p className="text-blue-900 font-bold">{diagnosis.condition}</p>
+                  {diagnosis.conditionMr && diagnosis.conditionMr !== diagnosis.condition && (
+                    <p className="text-blue-700 text-xs mt-0.5">{diagnosis.conditionMr}</p>
+                  )}
                 </div>
 
                 <div className={`border rounded-lg p-3 ${diagnosis.color}`}>
                   <p className="text-xs font-medium text-gray-500 mb-1">{t('urgency')}</p>
-                  <p className="font-semibold text-sm">{isMarathi ? diagnosis.urgencyMr : diagnosis.urgency}</p>
+                  <p className="font-semibold text-sm flex items-center gap-2">
+                    <MdCircle className={`text-xs ${diagnosis.urgencyLevel === 'red' ? 'text-red-500' : diagnosis.urgencyLevel === 'yellow' ? 'text-yellow-500' : 'text-green-500'}`} />
+                    {diagnosis.urgency}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">{diagnosis.urgencyMr}</p>
                 </div>
 
                 <div className="bg-green-50 border border-green-200 rounded-lg p-3">
                   <p className="text-xs text-green-600 font-medium mb-1">{t('seeSpecialist')}</p>
-                  <p className="text-green-800 font-bold">👨⚕️ {isMarathi ? diagnosis.specialistMr : diagnosis.specialist}</p>
+                  <p className="text-green-800 font-bold"><FaUserMd className="inline mr-1" />{diagnosis.specialist}</p>
+                  {diagnosis.specialistMr && diagnosis.specialistMr !== diagnosis.specialist && (
+                    <p className="text-green-600 text-xs mt-0.5">{diagnosis.specialistMr}</p>
+                  )}
                 </div>
 
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                  <p className="text-xs text-yellow-600 font-medium mb-1">{t('recommendations')}</p>
-                  <p className="text-yellow-800 text-xs">{isMarathi ? diagnosis.recommendationsMr : diagnosis.recommendations}</p>
+                  <p className="text-xs text-yellow-600 font-medium mb-2">{t('recommendations')}</p>
+                  <ul className="space-y-1">
+                    {diagnosis.recommendations.map((rec, i) => (
+                      <li key={i} className="text-yellow-800 text-xs flex gap-1"><span>•</span><span>{rec}</span></li>
+                    ))}
+                  </ul>
                 </div>
+
+                {diagnosis.home_therapy?.length > 0 && (
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
+                    <p className="text-xs text-emerald-700 font-semibold mb-2">🏠 Home Remedies / घरगुती उपाय</p>
+                    <div className="space-y-2">
+                      {diagnosis.home_therapy.map((remedy, i) => (
+                        <div key={i} className="flex gap-2">
+                          <span className="text-emerald-500 font-bold text-xs mt-0.5">{i + 1}.</span>
+                          <div>
+                            <p className="text-emerald-800 text-xs">{remedy}</p>
+                            {diagnosis.home_therapy_mr?.[i] && (
+                              <p className="text-emerald-600 text-xs mt-0.5">{diagnosis.home_therapy_mr[i]}</p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="bg-gray-50 rounded-lg p-3">
                   <p className="text-xs text-gray-500 font-medium mb-2">{t('yourSymptoms')}</p>
@@ -295,15 +361,39 @@ const SymptomsPage = () => {
                 </div>
 
                 <div className="bg-red-50 border border-red-200 rounded-lg p-2">
-                  <p className="text-xs text-red-600">⚠️ {t('disclaimer')}</p>
+                  <p className="text-xs text-red-600"><FiAlertTriangle className="inline mr-1" />{t('disclaimer')}</p>
                 </div>
 
                 <Button variant="outline" className="w-full" onClick={handleReset}>{t('checkAgain')}</Button>
 
-                <Button variant="primary" className="w-full"
-                  onClick={() => navigate(`/patient/doctors?specialty=${encodeURIComponent(diagnosis.specialist)}`)}>
-                  {isMarathi ? `${diagnosis.specialistMr} शोधा 👨⚕️` : `Find ${diagnosis.specialist} 👨⚕️`}
-                </Button>
+                {suggestedDoctors.length > 0 ? (
+                  <div className="bg-white border border-primary-200 rounded-lg p-3">
+                    <p className="text-xs font-semibold text-primary-700 mb-2 flex items-center gap-1">
+                      <FaUserMd />Matched Doctors for {isMarathi ? diagnosis.specialistMr : diagnosis.specialist}
+                    </p>
+                    <div className="space-y-2">
+                      {suggestedDoctors.map(doc => (
+                        <div key={doc._id || doc.id} className="flex items-center justify-between bg-gray-50 rounded-lg p-2">
+                          <div>
+                            <p className="font-medium text-gray-800 text-xs">{doc.name}</p>
+                            <p className="text-xs text-primary-600">{doc.specialty}</p>
+                            <p className="text-xs text-gray-400">₹{doc.fee} • {doc.available !== false ? '🟢 Available' : '🔴 Unavailable'}</p>
+                          </div>
+                          <Button size="sm" variant={doc.available !== false ? 'primary' : 'secondary'}
+                            disabled={doc.available === false}
+                            onClick={() => navigate(`/patient/book-appointment/${doc._id || doc.id}`)}>
+                            Book
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <Button variant="primary" className="w-full"
+                    onClick={() => navigate(`/patient/doctors?specialty=${encodeURIComponent(diagnosis.specialist)}`)}>
+                    <FaUserMd className="inline mr-1" />{isMarathi ? `${diagnosis.specialistMr} शोधा` : `Find ${diagnosis.specialist}`}
+                  </Button>
+                )}
               </div>
             </Card>
           )}

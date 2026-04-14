@@ -9,6 +9,8 @@ import { USER_ROLES } from './constants/roles';
 
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
+import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
+import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 import PatientDashboard from './pages/patient/PatientDashboard';
 import SymptomsPage from './pages/patient/SymptomsPage';
 import AppointmentsPage from './pages/patient/AppointmentsPage';
@@ -31,6 +33,8 @@ function App() {
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="/" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
                 <Route index element={<RoleRedirect />} />
                 <Route path="patient/dashboard" element={<ProtectedRoute allowedRoles={[USER_ROLES.PATIENT]}><PatientDashboard /></ProtectedRoute>} />

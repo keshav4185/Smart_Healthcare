@@ -11,6 +11,11 @@ export const patientService = {
     return res.data.data;
   },
 
+  getPrescriptions: async () => {
+    const res = await axiosInstance.get('/patient/prescriptions');
+    return res.data.data;
+  },
+
   uploadScan: async (file, type, symptoms) => {
     const formData = new FormData();
     formData.append('file', file);

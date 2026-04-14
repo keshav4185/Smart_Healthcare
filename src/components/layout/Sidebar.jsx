@@ -2,6 +2,9 @@ import { Link, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { USER_ROLES } from '../../constants/roles';
+import { MdDashboard, MdPeople, MdPerson } from 'react-icons/md';
+import { FaUserMd, FaStethoscope, FaCalendarAlt, FaFileMedical, FaShieldAlt } from 'react-icons/fa';
+import { FiX, FiMenu } from 'react-icons/fi';
 
 const Sidebar = () => {
   const { user } = useAuth();
@@ -9,24 +12,24 @@ const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   const patientMenu = [
-    { name: 'Dashboard', path: '/patient/dashboard', icon: '📊' },
-    { name: 'Find Doctors', path: '/patient/doctors', icon: '👨⚕️' },
-    { name: 'Symptoms', path: '/patient/symptoms', icon: '🩺' },
-    { name: 'Appointments', path: '/patient/appointments', icon: '📅' },
-    { name: 'Medical Records', path: '/patient/records', icon: '📋' },
-    { name: 'My Profile', path: '/profile', icon: '👤' },
+    { name: 'Dashboard', path: '/patient/dashboard', icon: <MdDashboard /> },
+    { name: 'Find Doctors', path: '/patient/doctors', icon: <FaUserMd /> },
+    { name: 'Symptoms', path: '/patient/symptoms', icon: <FaStethoscope /> },
+    { name: 'Appointments', path: '/patient/appointments', icon: <FaCalendarAlt /> },
+    { name: 'Medical Records', path: '/patient/records', icon: <FaFileMedical /> },
+    { name: 'My Profile', path: '/profile', icon: <MdPerson /> },
   ];
 
   const doctorMenu = [
-    { name: 'Dashboard', path: '/doctor/dashboard', icon: '📊' },
-    { name: 'Appointments', path: '/doctor/appointments', icon: '📅' },
-    { name: 'Patients', path: '/doctor/patients', icon: '👥' },
-    { name: 'Diagnoses', path: '/doctor/diagnoses', icon: '🩺' },
-    { name: 'My Profile', path: '/profile', icon: '👤' },
+    { name: 'Dashboard', path: '/doctor/dashboard', icon: <MdDashboard /> },
+    { name: 'Appointments', path: '/doctor/appointments', icon: <FaCalendarAlt /> },
+    { name: 'Patients', path: '/doctor/patients', icon: <MdPeople /> },
+    { name: 'Diagnoses', path: '/doctor/diagnoses', icon: <FaStethoscope /> },
+    { name: 'My Profile', path: '/profile', icon: <MdPerson /> },
   ];
 
   const adminMenu = [
-    { name: 'Doctor Verification', path: '/admin/dashboard', icon: '🛡️' },
+    { name: 'Doctor Verification', path: '/admin/dashboard', icon: <FaShieldAlt /> },
   ];
 
   const getMenuItems = () => {
@@ -50,7 +53,7 @@ const Sidebar = () => {
         onClick={() => setIsOpen(!isOpen)}
         className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-primary-800 text-white rounded-lg"
       >
-        <span className="text-2xl">{isOpen ? '✕' : '☰'}</span>
+        <span className="text-2xl">{isOpen ? <FiX /> : <FiMenu />}</span>
       </button>
 
       {isOpen && (
@@ -80,7 +83,7 @@ const Sidebar = () => {
                   : 'hover:bg-primary-700'
               }`}
             >
-              <span className="text-xl">{item.icon}</span>
+              <span className="text-xl flex items-center">{item.icon}</span>
               <span className="font-medium">{item.name}</span>
             </Link>
           ))}

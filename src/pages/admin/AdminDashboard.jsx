@@ -2,11 +2,25 @@ import { useState, useEffect } from 'react';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import { adminService } from '../../services/api/adminService';
+import { FaStethoscope, FaFileAlt, FaIdCard, FaCamera } from 'react-icons/fa';
+import { MdVerified, MdPending } from 'react-icons/md';
+import { FiCheckCircle, FiXCircle, FiEye } from 'react-icons/fi';
 
 const statusBadge = {
   verified: 'bg-green-100 text-green-800',
+  approved: 'bg-green-100 text-green-800',
   pending: 'bg-yellow-100 text-yellow-800',
   rejected: 'bg-red-100 text-red-800',
+};
+
+const DocLink = ({ url, icon: Icon, label }) => {
+  if (!url) return <span className="text-xs text-gray-400 italic">Not uploaded</span>;
+  return (
+    <a href={url} target="_blank" rel="noopener noreferrer"
+      className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 hover:underline">
+      <Icon size={12} />{label} <FiEye size={10} />
+    </a>
+  );
 };
 
 const AdminDashboard = () => {
@@ -35,7 +49,7 @@ const AdminDashboard = () => {
 
   const updateStatus = async (id, status) => {
     await adminService.updateDoctorStatus(id, status);
-    setDoctors(prev => prev.map(d => (d._id || d.id) === id ? { ...d, status } : d));
+    setDoctors(prev => prev.map(d => (d._id || d.id) === id ? { ...d, status, isVerified: status === 'verified' } : d));
     setStats(prev => ({
       ...prev,
       pending: status === 'verified' || status === 'rejected' ? prev.pending - 1 : prev.pending,
@@ -74,7 +88,7 @@ const AdminDashboard = () => {
         ))}
       </div>
 
-      <Card title="🩺 Doctor Verification">
+      <Card title={<span className="flex items-center gap-2"><FaStethoscope />Doctor Verification</span>}>
         {loading ? (
           <p className="text-center text-gray-500 py-8">Loading doctors...</p>
         ) : (
@@ -87,13 +101,22 @@ const AdminDashboard = () => {
                     <div className="flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="font-semibold text-gray-800">{doctor.name}</h3>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusBadge[doctor.status]}`}>
-                          {doctor.status === 'verified' ? '✅ Verified' : doctor.status === 'pending' ? '⏳ Pending' : '❌ Rejected'}
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex items-center gap-1 ${statusBadge[doctor.status]}`}>
+                          {doctor.status === 'verified'
+                            ? <><MdVerified />Verified</>
+                            : doctor.status === 'pending'
+                            ? <><MdPending />Pending</>
+                            : <><FiXCircle />Rejected</>}
                         </span>
                       </div>
                       <p className="text-sm text-gray-600">{doctor.specialty} • {doctor.experience}</p>
                       <p className="text-sm text-gray-500">{doctor.hospital}</p>
                       <p className="text-xs text-gray-400 mt-1">License: {doctor.licenseNumber} • {doctor.education}</p>
+                      <div className="flex items-center gap-3 mt-2 flex-wrap">
+                        <DocLink url={doctor.documents?.degreeCertificate} icon={FaFileAlt} label="Degree" />
+                        <DocLink url={doctor.documents?.idProof} icon={FaIdCard} label="ID Proof" />
+                        <DocLink url={doctor.documents?.selfieWithId} icon={FaCamera} label="Selfie" />
+                      </div>
                     </div>
                     <Button variant="outline" size="sm" onClick={() => setSelected({ ...doctor, id })}>Review</Button>
                   </div>
@@ -107,7 +130,7 @@ const AdminDashboard = () => {
 
       {selected && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg shadow-2xl max-w-md w-full p-6">
+          <div className="bg-white rounded-lg shadow-2xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-bold text-gray-800 mb-4">Doctor Review</h2>
             <div className="space-y-3 mb-6">
               <div className="bg-gray-50 rounded-lg p-4 space-y-2">
@@ -119,11 +142,39 @@ const AdminDashboard = () => {
                 <p><span className="font-medium">License No:</span> {selected.licenseNumber}</p>
                 <p><span className="font-medium">Email:</span> {selected.email}</p>
               </div>
-              {selected.certificate && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                  <p className="text-sm text-blue-800">📄 Certificate: <span className="font-medium">{selected.certificate}</span></p>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-blue-800 font-medium text-sm mb-3">Verification Documents</p>
+                <div className="space-y-3">
+                  {[
+                    { key: 'degreeCertificate', label: 'Degree Certificate', icon: FaFileAlt },
+                    { key: 'idProof', label: 'Government ID Proof', icon: FaIdCard },
+                    { key: 'selfieWithId', label: 'Selfie with ID', icon: FaCamera },
+                  ].map(({ key, label, icon: Icon }) => {
+                    const url = selected.documents?.[key];
+                    return (
+                      <div key={key} className="flex items-center justify-between">
+                        <span className="text-sm text-gray-700 flex items-center gap-2"><Icon />{label}</span>
+                        {url ? (
+                          url.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+                            <a href={url} target="_blank" rel="noopener noreferrer">
+                              <img src={url} alt={label} className="h-16 w-24 object-cover rounded border cursor-pointer hover:opacity-80" />
+                            </a>
+                          ) : (
+                            <a href={url} target="_blank" rel="noopener noreferrer"
+                              className="flex items-center gap-1 text-sm text-blue-600 hover:underline">
+                              <FiEye />View PDF
+                            </a>
+                          )
+                        ) : (
+                          <span className="text-xs text-gray-400 italic">Not uploaded</span>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
-              )}
+              </div>
+
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">Current Status:</span>
                 <span className={`text-xs px-2 py-1 rounded-full font-medium ${statusBadge[selected.status]}`}>{selected.status}</span>
@@ -132,10 +183,14 @@ const AdminDashboard = () => {
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setSelected(null)} className="flex-1">Cancel</Button>
               {selected.status !== 'rejected' && (
-                <Button variant="danger" onClick={() => updateStatus(selected.id, 'rejected')} className="flex-1">❌ Reject</Button>
+                <Button variant="danger" onClick={() => updateStatus(selected.id, 'rejected')} className="flex-1">
+                  <FiXCircle className="inline mr-1" />Reject
+                </Button>
               )}
               {selected.status !== 'verified' && (
-                <Button variant="success" onClick={() => updateStatus(selected.id, 'verified')} className="flex-1">✅ Verify</Button>
+                <Button variant="success" onClick={() => updateStatus(selected.id, 'verified')} className="flex-1">
+                  <FiCheckCircle className="inline mr-1" />Verify
+                </Button>
               )}
             </div>
           </div>

@@ -4,6 +4,8 @@ import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import EmergencySOS from '../../components/common/EmergencySOS';
 import axiosInstance from '../../services/api/axiosInstance';
+import { FaUserMd, FaStar } from 'react-icons/fa';
+import { MdVerified } from 'react-icons/md';
 
 const DoctorProfilePage = () => {
   const { id } = useParams();
@@ -12,12 +14,8 @@ const DoctorProfilePage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axiosInstance.get('/patient/doctors')
-      .then(res => {
-        const list = res.data.data || [];
-        const found = list.find(d => (d._id || d.id) === id);
-        setDoctor(found || null);
-      })
+    axiosInstance.get(`/patient/doctors/${id}`)
+      .then(res => setDoctor(res.data.data || null))
       .catch(() => setDoctor(null))
       .finally(() => setLoading(false));
   }, [id]);
@@ -42,17 +40,17 @@ const DoctorProfilePage = () => {
         <div className="lg:col-span-1">
           <Card>
             <div className="text-center">
-              <div className="text-8xl mb-4">👨⚕️</div>
+              <div className="mb-4 flex justify-center"><FaUserMd className="text-8xl text-primary-400" /></div>
               <div className="flex items-center justify-center gap-2 mb-1">
                 <h2 className="text-2xl font-bold text-gray-800">{doctor.name}</h2>
-                <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">✅ Verified</span>
+                <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full flex items-center gap-1"><MdVerified />Verified</span>
               </div>
               <p className="text-primary-600 font-medium text-lg">{doctor.specialty}</p>
               <p className="text-sm text-gray-600 mt-1">{doctor.education}</p>
 
               <div className="mt-4 pt-4 border-t">
                 <div className="flex items-center justify-center gap-2 mb-1">
-                  <span className="text-2xl">⭐</span>
+                  <FaStar className="text-2xl text-yellow-400" />
                   <span className="text-xl font-bold">{doctor.rating || 'N/A'}</span>
                 </div>
                 <p className="text-sm text-gray-600">
@@ -66,10 +64,10 @@ const DoctorProfilePage = () => {
               </div>
 
               <div className="mt-4 pt-4 border-t text-left space-y-2">
-                <p className="text-sm"><span className="font-medium">📋 License:</span> {doctor.licenseNumber}</p>
-                <p className="text-sm"><span className="font-medium">🏥 Hospital:</span> {doctor.hospital}</p>
+                <p className="text-sm"><span className="font-medium">License:</span> {doctor.licenseNumber}</p>
+                <p className="text-sm"><span className="font-medium">Hospital:</span> {doctor.hospital}</p>
                 <p className="text-sm">
-                  <span className="font-medium">🟢 Status:</span>{' '}
+                  <span className="font-medium">Status:</span>{' '}
                   <span className={doctor.available !== false ? 'text-green-600' : 'text-red-500'}>
                     {doctor.available !== false ? 'Available' : 'Unavailable'}
                   </span>
@@ -101,9 +99,9 @@ const DoctorProfilePage = () => {
 
           <Card title="Education & Credentials">
             <div className="space-y-2 text-sm">
-              <p><span className="font-medium">🎓 Education:</span> {doctor.education || '—'}</p>
-              <p><span className="font-medium">📋 License No:</span> {doctor.licenseNumber || '—'}</p>
-              <p><span className="font-medium">🏥 Hospital:</span> {doctor.hospital || '—'}</p>
+              <p><span className="font-medium">Education:</span> {doctor.education || '—'}</p>
+              <p><span className="font-medium">License No:</span> {doctor.licenseNumber || '—'}</p>
+              <p><span className="font-medium">Hospital:</span> {doctor.hospital || '—'}</p>
             </div>
           </Card>
 

@@ -25,4 +25,14 @@ export const appointmentService = {
     const res = await axiosInstance.delete(`/appointments/cancel/${id}`);
     return res.data;
   },
+
+  reschedule: async (id, date, timeSlot) => {
+    const res = await axiosInstance.put(`/appointments/reschedule/${id}`, { date, timeSlot });
+    return res.data.data;
+  },
+
+  getBookedSlots: async (doctorId, date) => {
+    const res = await axiosInstance.get(`/appointments/booked-slots?doctorId=${doctorId}&date=${date}`);
+    return res.data.data?.bookedSlots || [];
+  },
 };

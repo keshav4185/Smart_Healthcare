@@ -6,6 +6,10 @@ import { useAuth } from '../context/AuthContext';
 import { USER_ROLES } from '../constants/roles';
 import { userService } from '../services/api/userService';
 import { getFieldError } from '../utils/validation';
+import { FaUserMd, FaUser, FaCamera, FaLock } from 'react-icons/fa';
+import { FiEdit, FiSave } from 'react-icons/fi';
+import { MdVerified, MdCheckCircle } from 'react-icons/md';
+import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 
 const ProfilePage = () => {
   const { user, updateUser } = useAuth();
@@ -113,7 +117,7 @@ const ProfilePage = () => {
       setSaved(true);
       setEditing(false);
       setTimeout(() => setSaved(false), 3000);
-    } catch {}
+    } catch { /* ignore */ }
     finally {
       setLoading(false);
     }
@@ -124,18 +128,18 @@ const ProfilePage = () => {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl lg:text-3xl font-bold text-gray-800">My Profile</h1>
         {!editing ? (
-          <Button variant="primary" onClick={() => setEditing(true)}>✏️ Edit Profile</Button>
+          <Button variant="primary" onClick={() => setEditing(true)}><FiEdit className="inline mr-1" />Edit Profile</Button>
         ) : (
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setEditing(false)}>Cancel</Button>
-            <Button variant="success" onClick={handleSave} disabled={loading}>{loading ? 'Saving...' : '💾 Save'}</Button>
+            <Button variant="success" onClick={handleSave} disabled={loading}>{loading ? 'Saving...' : <><FiSave className="inline mr-1" />Save</>}</Button>
           </div>
         )}
       </div>
 
       {saved && (
-        <div className="bg-green-50 border border-green-200 text-green-700 p-3 rounded-lg mb-4 text-sm">
-          ✅ Profile updated successfully!
+        <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm flex items-center gap-2">
+          <MdCheckCircle />Profile updated successfully!
         </div>
       )}
 
@@ -145,19 +149,19 @@ const ProfilePage = () => {
             <div className="w-20 h-20 rounded-full bg-primary-100 flex items-center justify-center text-4xl overflow-hidden">
               {photo
                 ? <img src={photo} alt="Profile" className="w-full h-full object-cover" />
-                : <span>{isDoctor ? '👨⚕️' : '🧑'}</span>
+                : <span>{isDoctor ? <FaUserMd className="text-4xl text-primary-400" /> : <FaUser className="text-4xl text-primary-400" />}</span>
               }
             </div>
             <label className="absolute bottom-0 right-0 bg-primary-600 text-white rounded-full w-6 h-6 flex items-center justify-center cursor-pointer hover:bg-primary-700 text-xs">
-              {photoLoading ? '⏳' : '📷'}
+              {photoLoading ? <AiOutlineLoading3Quarters className="animate-spin" /> : <FaCamera />}
               <input type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} disabled={photoLoading} />
             </label>
           </div>
           <div>
             <h2 className="text-xl font-bold text-gray-800">{formData.name}</h2>
             <p className="text-gray-500 capitalize">{user?.role}</p>
-            {isDoctor && <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">✅ Verified Doctor</span>}
-            <p className="text-xs text-gray-400 mt-1">Click 📷 to update photo (max 2MB)</p>
+            {isDoctor && <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full flex items-center gap-1"><MdVerified />Verified Doctor</span>}
+            <p className="text-xs text-gray-400 mt-1 flex items-center gap-1"><FaCamera className="text-xs" />Click to update photo (max 2MB)</p>
           </div>
         </div>
       </Card>
@@ -230,7 +234,7 @@ const ProfilePage = () => {
         </Card>
       )}
 
-      <Card title="🔒 Change Password">
+      <Card title={<span className="flex items-center gap-2"><FaLock />Change Password</span>}>
         {pwMsg.text && (
           <div className={`mb-4 p-3 rounded-lg text-sm ${pwMsg.type === 'success' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
             {pwMsg.text}
@@ -242,7 +246,7 @@ const ProfilePage = () => {
           <Input label="Confirm New Password" type="password" name="confirmPassword" value={pwForm.confirmPassword} onChange={handlePwChange} placeholder="Confirm new password" error={pwErrors.confirmPassword} />
         </div>
         <Button variant="primary" className="mt-2" onClick={handlePasswordSave} disabled={pwLoading}>
-          {pwLoading ? 'Updating...' : '🔒 Update Password'}
+          {pwLoading ? 'Updating...' : <><FaLock className="inline mr-1" />Update Password</>}
         </Button>
       </Card>
     </div>

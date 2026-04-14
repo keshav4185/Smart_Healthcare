@@ -1,11 +1,22 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { useAppointments } from '../../context/AppointmentContext';
+import { MdLanguage } from 'react-icons/md';
+import { FiLogOut, FiBell } from 'react-icons/fi';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
   const { toggleLanguage, isMarathi } = useLanguage();
+  const { appointments } = useAppointments();
   const navigate = useNavigate();
+
+  // Unread = confirmed appointments patient hasn't acted on, or pending for doctor
+  const unread = appointments.filter(a =>
+    user?.role === 'patient'
+      ? a.status === 'confirmed'
+      : a.status === 'pending'
+  ).length;
 
   return (
     <nav className="bg-white shadow-md h-16 fixed top-0 right-0 left-0 lg:left-64 z-10">
@@ -19,8 +30,22 @@ const Navbar = () => {
             onClick={toggleLanguage}
             className="flex items-center gap-2 px-3 py-2 bg-primary-50 hover:bg-primary-100 text-primary-700 rounded-lg transition-colors text-sm font-medium"
           >
-            <span className="text-lg">{isMarathi ? '🇮🇳' : '🇬🇧'}</span>
+            <MdLanguage className="text-lg" />
             <span className="hidden sm:inline">{isMarathi ? 'मराठी' : 'English'}</span>
+          </button>
+
+          {/* Notification Bell */}
+          <button
+            onClick={() => navigate(user?.role === 'doctor' ? '/doctor/appointments' : '/patient/appointments')}
+            className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            title={user?.role === 'patient' ? 'Confirmed appointments' : 'Pending appointments'}
+          >
+            <FiBell className="text-xl text-gray-600" />
+            {unread > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                {unread > 9 ? '9+' : unread}
+              </span>
+            )}
           </button>
 
           <button
@@ -38,9 +63,9 @@ const Navbar = () => {
 
           <button
             onClick={logout}
-            className="px-2 py-1 lg:px-4 lg:py-2 text-xs lg:text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            className="px-2 py-1 lg:px-4 lg:py-2 text-xs lg:text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-1"
           >
-            Logout
+            <FiLogOut /><span className="hidden lg:inline">Logout</span>
           </button>
         </div>
       </div>
