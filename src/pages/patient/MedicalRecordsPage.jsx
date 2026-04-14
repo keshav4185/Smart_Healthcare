@@ -215,3 +215,6 @@ const MedicalRecordsPage = () => {
 };
 
 export default MedicalRecordsPage;
+
+
+
