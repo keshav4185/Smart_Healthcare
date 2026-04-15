@@ -20,7 +20,7 @@ const ProfilePage = () => {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '', email: '', phone: '', address: '',
-    dob: '', bloodGroup: '',
+    dob: '', bloodGroup: '', age: '', gender: '',
     specialty: '', hospital: '', experience: '',
     licenseNumber: '', education: '', bio: '', fee: '',
   });
@@ -42,6 +42,8 @@ const ProfilePage = () => {
           address: data.address || '',
           dob: data.dob ? data.dob.split('T')[0] : '',
           bloodGroup: data.bloodGroup || '',
+          age: data.age || '',
+          gender: data.gender || '',
           specialty: data.specialty || '',
           hospital: data.hospital || '',
           experience: data.experience || '',
@@ -144,24 +146,49 @@ const ProfilePage = () => {
       )}
 
       <Card className="mb-6">
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            <div className="w-20 h-20 rounded-full bg-primary-100 flex items-center justify-center text-4xl overflow-hidden">
+        <div className="flex flex-col sm:flex-row items-center gap-6">
+          {/* Photo Circle */}
+          <div className="relative shrink-0">
+            <div className="w-28 h-28 rounded-full bg-primary-100 flex items-center justify-center overflow-hidden border-4 border-primary-200 shadow-md">
               {photo
                 ? <img src={photo} alt="Profile" className="w-full h-full object-cover" />
-                : <span>{isDoctor ? <FaUserMd className="text-4xl text-primary-400" /> : <FaUser className="text-4xl text-primary-400" />}</span>
+                : <span className="text-5xl">{isDoctor ? <FaUserMd className="text-primary-400" /> : <FaUser className="text-primary-400" />}</span>
               }
             </div>
-            <label className="absolute bottom-0 right-0 bg-primary-600 text-white rounded-full w-6 h-6 flex items-center justify-center cursor-pointer hover:bg-primary-700 text-xs">
-              {photoLoading ? <AiOutlineLoading3Quarters className="animate-spin" /> : <FaCamera />}
-              <input type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} disabled={photoLoading} />
+            {/* Camera overlay button */}
+            <label className="absolute bottom-1 right-1 bg-primary-600 hover:bg-primary-700 text-white rounded-full w-8 h-8 flex items-center justify-center cursor-pointer shadow-lg transition-colors" title="Change photo">
+              {photoLoading
+                ? <AiOutlineLoading3Quarters className="animate-spin text-sm" />
+                : <FaCamera className="text-sm" />
+              }
+              <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handlePhotoChange} disabled={photoLoading} />
             </label>
           </div>
-          <div>
-            <h2 className="text-xl font-bold text-gray-800">{formData.name}</h2>
-            <p className="text-gray-500 capitalize">{user?.role}</p>
-            {isDoctor && <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full flex items-center gap-1"><MdVerified />Verified Doctor</span>}
-            <p className="text-xs text-gray-400 mt-1 flex items-center gap-1"><FaCamera className="text-xs" />Click to update photo (max 2MB)</p>
+
+          {/* Info + Upload hint */}
+          <div className="text-center sm:text-left flex-1">
+            <h2 className="text-2xl font-bold text-gray-800">{formData.name}</h2>
+            <p className="text-gray-500 capitalize mt-0.5">{user?.role}</p>
+            {isDoctor && (
+              <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full mt-1">
+                <MdVerified />Verified Doctor
+              </span>
+            )}
+            {!isDoctor && formData.bloodGroup && (
+              <span className="inline-flex items-center gap-1 bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full mt-1 ml-1">
+                🩸 {formData.bloodGroup}
+              </span>
+            )}
+            <div className="mt-3">
+              <label className="inline-flex items-center gap-2 px-4 py-2 bg-primary-50 hover:bg-primary-100 text-primary-700 border border-primary-200 rounded-lg cursor-pointer transition-colors text-sm font-medium">
+                {photoLoading
+                  ? <><AiOutlineLoading3Quarters className="animate-spin" />Uploading...</>
+                  : <><FaCamera />Change Photo</>
+                }
+                <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handlePhotoChange} disabled={photoLoading} />
+              </label>
+              <p className="text-xs text-gray-400 mt-1">JPG, PNG or WebP — max 2MB</p>
+            </div>
           </div>
         </div>
       </Card>
@@ -175,6 +202,14 @@ const ProfilePage = () => {
               <Input label="Address" name="address" value={formData.address} onChange={handleChange} />
               {!isDoctor && (
                 <>
+                  <Input label="Age" type="number" name="age" value={formData.age} onChange={handleChange} placeholder="e.g. 25" />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                    <select name="gender" value={formData.gender} onChange={handleChange} className="input-field">
+                      <option value="">Select</option>
+                      <option>Male</option><option>Female</option><option>Other</option>
+                    </select>
+                  </div>
                   <Input label="Date of Birth" type="date" name="dob" value={formData.dob} onChange={handleChange} />
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Blood Group</label>
@@ -194,8 +229,10 @@ const ProfilePage = () => {
               <div><p className="text-sm text-gray-500">Address</p><p className="font-medium">{formData.address || '—'}</p></div>
               {!isDoctor && (
                 <>
+                  <div><p className="text-sm text-gray-500">Age</p><p className="font-medium">{formData.age ? `${formData.age} years` : '—'}</p></div>
+                  <div><p className="text-sm text-gray-500">Gender</p><p className="font-medium">{formData.gender || '—'}</p></div>
                   <div><p className="text-sm text-gray-500">Date of Birth</p><p className="font-medium">{formData.dob || '—'}</p></div>
-                  <div><p className="text-sm text-gray-500">Blood Group</p><p className="font-medium text-red-600">{formData.bloodGroup || '—'}</p></div>
+                  <div><p className="text-sm text-gray-500">Blood Group</p><p className="font-medium text-red-600 font-bold">{formData.bloodGroup || '—'}</p></div>
                 </>
               )}
             </>

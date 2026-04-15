@@ -52,8 +52,11 @@ const Navbar = () => {
             onClick={() => navigate('/profile')}
             className="flex items-center gap-2 hover:bg-gray-50 rounded-lg px-2 py-1 transition-colors"
           >
-            <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-primary-500 flex items-center justify-center text-white font-semibold text-sm">
-              {user?.name?.charAt(0).toUpperCase() || 'U'}
+            <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-primary-500 flex items-center justify-center text-white font-semibold text-sm overflow-hidden">
+              {user?.profilePhoto
+                ? <img src={user.profilePhoto} alt="avatar" className="w-full h-full object-cover" />
+                : <span>{user?.name?.charAt(0).toUpperCase() || 'U'}</span>
+              }
             </div>
             <div className="hidden md:block text-left">
               <p className="text-sm font-medium text-gray-800">{user?.name}</p>
