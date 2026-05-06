@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
+import useSpeech from '../../hooks/useSpeech';
+import { FaVolumeUp, FaVolumeMute } from 'react-icons/fa';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import { formatDate } from '../../utils/helpers';
@@ -16,6 +18,7 @@ const SCAN_TYPES = ['X-Ray', 'CT Scan', 'MRI Scan', 'Lab Report', 'Prescription'
 const MedicalRecordsPage = () => {
   const navigate = useNavigate();
   const { isMarathi } = useLanguage();
+  const { speak, stop, speaking, supported } = useSpeech();
   const [tab, setTab] = useState('records');
   const [records, setRecords] = useState([]);
   const [prescriptions, setPrescriptions] = useState([]);
@@ -176,7 +179,23 @@ const MedicalRecordsPage = () => {
             
             {aiAnalysis && (
               <div className="bg-green-50 border border-green-200 rounded-lg p-3 space-y-2">
-                <p className="text-sm font-semibold text-green-800">{isMarathi ? 'AI विश्लेषण पूर्ण' : 'AI Analysis Complete'}</p>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold text-green-800">{isMarathi ? 'AI विश्लेषण पूर्ण' : 'AI Analysis Complete'}</p>
+                  {supported && (
+                    <button
+                      onClick={() => {
+                        const text = isMarathi
+                          ? `निष्कर्ष: ${aiAnalysis.finding}. तीव्रता: ${aiAnalysis.severity}. अंदाजित लक्षणे: ${aiAnalysis.predicted_symptoms_mr || aiAnalysis.predicted_symptoms_en}. शिफारस: ${aiAnalysis.recommendation}`
+                          : `Finding: ${aiAnalysis.finding}. Severity: ${aiAnalysis.severity}. Predicted symptoms: ${aiAnalysis.predicted_symptoms_en}. Recommendation: ${aiAnalysis.recommendation}`;
+                        speaking ? stop() : speak(text, isMarathi ? 'mr' : 'en');
+                      }}
+                      className={`flex items-center gap-1 px-3 py-1 rounded-lg border text-xs font-medium transition-colors ${
+                        speaking ? 'bg-red-50 border-red-300 text-red-600' : 'bg-blue-50 border-blue-300 text-blue-600'
+                      }`}>
+                      {speaking ? <><FaVolumeMute />{isMarathi ? 'थांबवा' : 'Stop'}</> : <><FaVolumeUp />{isMarathi ? 'ऐका' : 'Listen'}</>}
+                    </button>
+                  )}
+                </div>
                 <p className="text-xs text-green-700"><strong>{isMarathi ? 'निष्कर्ष:' : 'Finding:'}</strong> {aiAnalysis.finding}</p>
                 <p className="text-xs text-green-700"><strong>{isMarathi ? 'तीव्रता:' : 'Severity:'}</strong> {aiAnalysis.severity}</p>
                 <p className="text-xs text-green-700"><strong>{isMarathi ? 'अंदाजित लक्षणे:' : 'Predicted Symptoms:'}</strong> {isMarathi ? aiAnalysis.predicted_symptoms_mr : aiAnalysis.predicted_symptoms_en}</p>

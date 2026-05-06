@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GiBrain, GiStomach, GiBrokenBone } from 'react-icons/gi';
-import { FaEye, FaHeartbeat, FaTint, FaThermometerHalf, FaUserMd } from 'react-icons/fa';
+import { FaEye, FaHeartbeat, FaTint, FaThermometerHalf, FaUserMd, FaVolumeUp, FaVolumeMute } from 'react-icons/fa';
 import { FaEarListen } from 'react-icons/fa6';
 import { MdSick, MdCircle } from 'react-icons/md';
 import { RiMentalHealthLine } from 'react-icons/ri';
 import { FiPlus, FiCheckCircle, FiAlertTriangle } from 'react-icons/fi';
+import useSpeech from '../../hooks/useSpeech';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import EmergencySOS from '../../components/common/EmergencySOS';
@@ -65,6 +66,11 @@ const diagnoseSymptoms = (selected, severity) => {
 const SymptomsPage = () => {
   const { t, isMarathi } = useLanguage();
   const navigate = useNavigate();
+  const { speak, stop, speaking, supported } = useSpeech();
+
+  const buildSpeechText = (d) => isMarathi
+    ? `संभाव्य आजार: ${d.conditionMr || d.condition}. तज्ञ: ${d.specialistMr || d.specialist}. तातडी: ${d.urgencyMr || d.urgency}. सल्ला: ${Array.isArray(d.recommendationsMr) ? d.recommendationsMr.join('. ') : d.recommendationsMr || ''}`
+    : `Possible condition: ${d.condition}. See a ${d.specialist}. Urgency: ${d.urgency}. Recommendations: ${Array.isArray(d.recommendations) ? d.recommendations.join('. ') : d.recommendations || ''}`;
   const [selected, setSelected] = useState([]);
   const [typedSymptom, setTypedSymptom] = useState('');
   const [duration, setDuration] = useState('');
@@ -364,7 +370,16 @@ const SymptomsPage = () => {
                   <p className="text-xs text-red-600"><FiAlertTriangle className="inline mr-1" />{t('disclaimer')}</p>
                 </div>
 
-                <Button variant="outline" className="w-full" onClick={handleReset}>{t('checkAgain')}</Button>
+                {supported && (
+                  <button
+                    onClick={() => speaking ? stop() : speak(buildSpeechText(diagnosis), isMarathi ? 'mr' : 'en')}
+                    className={`w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg border text-sm font-medium transition-colors ${
+                      speaking ? 'bg-red-50 border-red-300 text-red-600 hover:bg-red-100' : 'bg-blue-50 border-blue-300 text-blue-600 hover:bg-blue-100'
+                    }`}>
+                    {speaking ? <><FaVolumeMute />{isMarathi ? 'थांबवा' : 'Stop'}</> : <><FaVolumeUp />{isMarathi ? 'ऐका' : 'Listen'}</>}
+                  </button>
+                )}
+                <Button variant="outline" className="w-full" onClick={() => { stop(); handleReset(); }}>{t('checkAgain')}</Button>
 
                 {suggestedDoctors.length > 0 ? (
                   <div className="bg-white border border-primary-200 rounded-lg p-3">
