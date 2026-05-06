@@ -10,6 +10,12 @@ Doctors manage appointments, patients, and prescriptions. Admins verify doctor r
 
 ## Tech Stack
 
+#Doctor verification
+National Medical Commission (NMC) registry. You can verify doctor license numbers against it.
+
+Option 1: NMC Registry (Free - Manual)
+Go to: https://www.nmc.org.in/information-desk/indian-medical-register/
+
 ### Frontend
 | Package | Version | Purpose |
 |---|---|---|
@@ -31,9 +37,13 @@ Doctors manage appointments, patients, and prescriptions. Admins verify doctor r
 | Multer | 1.4.5 | File uploads |
 | Nodemailer | 8.0.5 | Email sending |
 | @google/generative-ai | 0.24.1 | Gemini AI integration |
-| Cloudinary | 2.2.0 | Cloud file storage |
+| Cloudinary | 2.10.0 | Cloud file storage (upgraded) |
 | PDFKit | 0.18.0 | PDF generation |
 | Nodemon | 3.1.3 | Dev auto-restart |
+| Helmet | latest | HTTP security headers |
+| express-rate-limit | latest | Auth route rate limiting |
+| express-validator | latest | Input validation |
+| express-mongo-sanitize | latest | NoSQL injection prevention |
 
 ---
 
@@ -405,8 +415,9 @@ Uses Gmail SMTP via Nodemailer. Configured with `EMAIL_USER` and `EMAIL_PASS` (G
 ### `authMiddleware.js` — `protect`
 - Reads `Authorization: Bearer <token>` header
 - Verifies JWT with `JWT_SECRET`
-- Attaches full user object to `req.user` (excluding password and refreshToken)
-- Returns `401` if token missing, invalid, or user not found
+- Attaches user object to `req.user` (excluding password, refreshToken, resetPasswordToken, resetPasswordExpires)
+- Returns `401` with specific message: `Token expired` or `Token invalid`
+- Returns `401` if token missing or user not found
 
 ### `roleMiddleware.js` — `authorizeRoles(...roles)`
 - Checks `req.user.role` against allowed roles
@@ -545,6 +556,14 @@ mongoose.connect(process.env.MONGO_URI).then(async () => {
 - Role-based route protection on both frontend (ProtectedRoute) and backend (authorizeRoles)
 - File upload: type + size validation on every upload endpoint
 - CORS restricted to `localhost:5173` and production Vercel URL
+- `helmet` — sets HTTP security headers on every response
+- `express-mongo-sanitize` — strips `$` and `.` from request body to prevent NoSQL injection
+- Rate limiting on `/login`, `/register`, `/forgot-password` — max 10 requests per 15 min
+- Input validation via `express-validator` on all auth routes
+- Email enumeration fix — forgot password always returns same message regardless of email existence
+- `authMiddleware` strips `resetPasswordToken` and `resetPasswordExpires` from `req.user`
+- JWT env variable guard — server throws clear error if `JWT_SECRET` is missing
+- Global error handler — all unhandled errors return clean JSON, never crash the server
 
 ---
 
@@ -578,6 +597,37 @@ mongoose.connect(process.env.MONGO_URI).then(async () => {
 | Emergency SOS | Floating button → quick call to 108 / 112 / Hospital |
 | Token Auto-Refresh | Silent refresh on 401, retry original request |
 | PDF Export | Medical records exportable as PDF |
+| Rate Limiting | Auth routes protected against brute force (10 req / 15 min) |
+| Input Validation | All auth routes validated via express-validator |
+| NoSQL Injection Prevention | express-mongo-sanitize strips malicious operators |
+| HTTP Security Headers | helmet sets 11 security headers on every response |
+| Pagination | All list APIs support ?page=&limit= |
+| MongoDB Indexes | All 4 collections indexed for fast queries |
+
+---
+
+## Pagination
+
+All heavy list APIs support `?page=&limit=` query parameters.
+
+| Endpoint | Default Limit | Returns |
+|---|---|---|
+| `GET /api/admin/doctors` | 10 | `{ doctors, total, page, pages }` |
+| `GET /api/doctor/patients` | 10 | `{ patients, total, page, pages }` |
+| `GET /api/diagnosis/history` | 10 | `{ diagnoses, total, page, pages }` |
+
+---
+
+## MongoDB Indexes
+
+Indexes added to all 4 collections for faster query performance.
+
+| Collection | Index |
+|---|---|
+| users | `email`, `role + status` |
+| appointments | `patientId`, `doctorId`, `doctorId + date + status` |
+| diagnoses | `patientId + createdAt` |
+| medicalrecords | `patientId`, `doctorId` |
 
 ---
 
@@ -591,3 +641,233 @@ mongoose.connect(process.env.MONGO_URI).then(async () => {
 6. Patient Dashboard → upload X-Ray/MRI → AI Scan Analysis → findings + severity
 7. Forgot Password → email reset link → set new password
 8. Profile → update photo, info, fee, change password
+
+---
+
+## Database Schema Tables
+
+This project uses **4 MongoDB collections**. The tables below incorporate all fields with their data types and descriptions.
+
+---
+
+### Table 1: User (Collection: `users`)
+
+This table stores all users — patients, doctors, and admins — in a single collection with role-based fields.
+
+| Sr.No | Attribute | Data Type | Description |
+|---|---|---|---|
+| 1 | _id | ObjectId | Primary Key; auto-generated MongoDB document ID. |
+| 2 | name | String(trim) | Full name of the user. Required. |
+| 3 | email | String(lowercase) | Unique email address used for login. Required. |
+| 4 | password | String(min:6) | Bcrypt-hashed password. Required. |
+| 5 | role | String(enum) | User role: `patient`, `doctor`, or `admin`. Default: `patient`. |
+| 6 | phone | String | Mobile number of the user. |
+| 7 | address | String | Residential address of the user. |
+| 8 | profilePhoto | String | URL/path to profile photo. Default: `''`. |
+| 9 | dob | Date | Date of birth. (Patient field) |
+| 10 | bloodGroup | String | Blood group (e.g., A+, O-). (Patient field) |
+| 11 | age | Number | Age of the patient. (Patient field) |
+| 12 | gender | String(enum) | Gender: `Male`, `Female`, or `Other`. (Patient field) |
+| 13 | specialty | String | Medical specialty (e.g., Cardiologist). (Doctor field) |
+| 14 | licenseNumber | String | Medical license number. (Doctor field) |
+| 15 | hospital | String | Hospital or clinic name. (Doctor field) |
+| 16 | experience | Number | Years of experience. (Doctor field) |
+| 17 | education | String | Educational qualifications. (Doctor field) |
+| 18 | certificate | String | Certificate details. (Doctor field) |
+| 19 | documents.degreeCertificate | String | URL/path to degree certificate file. (Doctor field) |
+| 20 | documents.idProof | String | URL/path to ID proof file. (Doctor field) |
+| 21 | documents.selfieWithId | String | URL/path to selfie with ID file. (Doctor field) |
+| 22 | verificationStatus | String(enum) | Admin verification: `pending`, `approved`, `rejected`. Default: `pending`. (Doctor field) |
+| 23 | isVerified | Boolean | Whether doctor is verified. Default: `false`. (Doctor field) |
+| 24 | status | String(enum) | Doctor status: `pending`, `verified`, `rejected`. Default: `pending`. (Doctor field) |
+| 25 | rating | Number | Doctor rating score. Default: `0`. (Doctor field) |
+| 26 | fee | Number | Consultation fee amount. (Doctor field) |
+| 27 | available | Boolean | Doctor availability toggle. Default: `true`. (Doctor field) |
+| 28 | refreshToken | String | JWT refresh token for session management. (Auth field) |
+| 29 | resetPasswordToken | String | SHA-256 hashed token for password reset. (Auth field) |
+| 30 | resetPasswordExpires | Date | Expiry datetime for password reset token (15 min). (Auth field) |
+| 31 | createdAt | DateTime | Account creation timestamp. Auto-generated by Mongoose. |
+| 32 | updatedAt | DateTime | Last update timestamp. Auto-generated by Mongoose. |
+
+---
+
+### Table 2: Appointment (Collection: `appointments`)
+
+This table stores all appointment bookings between patients and doctors.
+
+| Sr.No | Attribute | Data Type | Description |
+|---|---|---|---|
+| 1 | _id | ObjectId | Primary Key; auto-generated MongoDB document ID. |
+| 2 | patientId | ObjectId (FK → User) | Reference to the patient who booked the appointment. Required. |
+| 3 | doctorId | ObjectId (FK → User) | Reference to the doctor for the appointment. Required. |
+| 4 | date | Date | Appointment date. Required. |
+| 5 | timeSlot | String | Selected time slot (e.g., `10:00 AM`). Required. |
+| 6 | reason | String | Reason for the appointment. |
+| 7 | symptoms | Array[String] | List of symptoms reported by the patient. |
+| 8 | status | String(enum) | Appointment status: `pending`, `confirmed`, `completed`, `cancelled`. Default: `pending`. |
+| 9 | fee | Number | Consultation fee for the appointment. |
+| 10 | type | String(enum) | Appointment type: `In-person` or `Video`. Default: `In-person`. |
+| 11 | createdAt | DateTime | Booking creation timestamp. Auto-generated by Mongoose. |
+| 12 | updatedAt | DateTime | Last update timestamp. Auto-generated by Mongoose. |
+
+---
+
+### Table 3: Diagnosis (Collection: `diagnoses`)
+
+This table stores AI-generated diagnosis records for patients based on submitted symptoms.
+
+| Sr.No | Attribute | Data Type | Description |
+|---|---|---|---|
+| 1 | _id | ObjectId | Primary Key; auto-generated MongoDB document ID. |
+| 2 | patientId | ObjectId (FK → User) | Reference to the patient who received the diagnosis. Required. |
+| 3 | symptoms | Array[String] | List of symptoms submitted by the patient. |
+| 4 | severity | String | Severity level reported (e.g., mild, moderate, severe). |
+| 5 | duration | String | Duration of symptoms (e.g., `2 days`, `1 week`). |
+| 6 | condition | String | AI-predicted medical condition. |
+| 7 | specialist | String | Recommended type of specialist (e.g., Cardiologist). |
+| 8 | urgency | String | Urgency level: `low`, `medium`, `high`, or `emergency`. |
+| 9 | recommendations | String | AI-generated recommendations for the patient. |
+| 10 | createdAt | DateTime | Diagnosis creation timestamp. Auto-generated by Mongoose. |
+| 11 | updatedAt | DateTime | Last update timestamp. Auto-generated by Mongoose. |
+
+---
+
+### Table 4: MedicalRecord (Collection: `medicalrecords`)
+
+This table stores all medical records including lab reports, prescriptions, and scan uploads for patients.
+
+| Sr.No | Attribute | Data Type | Description |
+|---|---|---|---|
+| 1 | _id | ObjectId | Primary Key; auto-generated MongoDB document ID. |
+| 2 | patientId | ObjectId (FK → User) | Reference to the patient who owns the record. Required. |
+| 3 | doctorId | ObjectId (FK → User) | Reference to the doctor who created the record (optional). |
+| 4 | type | String(enum) | Record type: `Lab Report`, `Prescription`, `X-Ray`, `CT Scan`, `MRI`, `MRI Scan`. Required. |
+| 5 | title | String | Title or name of the medical record. Required. |
+| 6 | fileUrl | String | URL/path to the uploaded file (image or PDF). |
+| 7 | fileSize | String | Size of the uploaded file (e.g., `2.4 MB`). |
+| 8 | symptoms | Array[String] | Symptoms associated with this record. |
+| 9 | findings | String | Medical findings or notes from the doctor or AI scan analysis. |
+| 10 | status | String(enum) | Record status: `Active` or `Completed`. Default: `Active`. |
+| 11 | createdAt | DateTime | Record creation timestamp. Auto-generated by Mongoose. |
+| 12 | updatedAt | DateTime | Last update timestamp. Auto-generated by Mongoose. |
+
+---
+
+### Table Summary
+
+| Sr.No | Collection Name | Model File | Total Fields | Purpose |
+|---|---|---|---|---|
+| 1 | users | User.js | 32 | Stores patients, doctors, and admins with role-based fields |
+| 2 | appointments | Appointment.js | 12 | Tracks all appointment bookings between patients and doctors |
+| 3 | diagnoses | Diagnosis.js | 11 | Stores AI-generated symptom diagnosis history per patient |
+| 4 | medicalrecords | MedicalRecord.js | 12 | Stores lab reports, prescriptions, and scan uploads per patient |
+
+---
+
+## Changelog
+
+---
+
+### Session 1 — Database Schema Documentation
+- Added full **Database Schema Tables** section to documentation
+- Documented all 4 MongoDB collections with Sr.No, Attribute, Data Type, Description for every field
+- Added Table Summary with collection names, model files, field counts, and purpose
+
+---
+
+### Session 2 — Security Fixes
+
+**Backend**
+| File | Change |
+|---|---|
+| `app.js` | Added `express-rate-limit` — `/login`, `/register`, `/forgot-password` limited to 10 req / 15 min |
+| `app.js` | Added global error handler — all unhandled errors return clean JSON, server never crashes |
+| `routes/auth.js` | Added `express-validator` input validation on all 6 auth routes |
+| `services/authService.js` | Fixed email enumeration — forgot password always returns same message |
+
+**Frontend**
+| File | Change |
+|---|---|
+| `components/common/ErrorBoundary.jsx` | Created React Error Boundary — prevents full UI crash on component error |
+| `main.jsx` | Wrapped `<App />` with `<ErrorBoundary>` |
+
+---
+
+### Session 3 — Performance & Bug Fixes
+
+**Backend — Pagination**
+| File | Change |
+|---|---|
+| `services/adminService.js` | `getAllDoctors` supports `page` + `limit`, returns `{ doctors, total, page, pages }` |
+| `services/doctorService.js` | `getDoctorPatients` supports `page` + `limit`, returns `{ patients, total, page, pages }` |
+| `services/diagnosisService.js` | `fetchDiagnosisHistory` supports `page` + `limit`, returns `{ diagnoses, total, page, pages }` |
+| `controllers/adminController.js` | Reads `?page=&limit=` from query |
+| `controllers/doctorController.js` | Reads `?page=&limit=` from query |
+| `controllers/diagnosisController.js` | Reads `?page=&limit=` from query |
+
+**Backend — MongoDB Indexes**
+| File | Index Added |
+|---|---|
+| `models/User.js` | `email`, `role + status` |
+| `models/Appointment.js` | `patientId`, `doctorId`, `doctorId + date + status` |
+| `models/Diagnosis.js` | `patientId + createdAt` |
+| `models/MedicalRecord.js` | `patientId`, `doctorId` |
+
+**Frontend — Performance**
+| File | Change |
+|---|---|
+| `context/AuthContext.jsx` | Added `useMemo` to provider value with full dependency array |
+| `context/AppointmentContext.jsx` | Added `useMemo` to provider value with full dependency array |
+
+**Frontend — Bug Fixes**
+| File | Change |
+|---|---|
+| `App.jsx` | Connected `DoctorDiagnosesPage` to `/doctor/diagnoses` route (was "Coming soon...") |
+| `utils/secureStorage.js` | Cleared deprecated file — tokens managed via AuthContext |
+
+---
+
+### Session 4 — Full Security Hardening
+
+**Packages Installed**
+| Package | Purpose |
+|---|---|
+| `helmet` | Sets 11 HTTP security headers on every response |
+| `express-mongo-sanitize` | Strips `$` and `.` operators from req.body — prevents NoSQL injection |
+| `cloudinary` upgraded to `2.10.0` | Fixed high severity vulnerability (arbitrary argument injection) |
+| `multer-storage-cloudinary` upgraded to `2.2.1` | Fixed dependency vulnerability |
+| Result: **0 vulnerabilities** | `npm audit` clean |
+
+**Backend**
+| File | Change |
+|---|---|
+| `app.js` | Added `helmet()` and `mongoSanitize()` middleware |
+| `app.js` | Added `express.json({ limit: '10mb' })` to prevent large payload attacks |
+| `app.js` | Added fallback port `5000`, added `.catch` with `process.exit(1)` on server start failure |
+| `config/db.js` | Added `process.exit(1)` on DB connection failure — server won't silently run without DB |
+| `config/db.js` | Suppressed `console.log` in production |
+| `middleware/authMiddleware.js` | Strips `resetPasswordToken` + `resetPasswordExpires` from `req.user` |
+| `middleware/authMiddleware.js` | Added specific error messages: `Token expired` vs `Token invalid` |
+| `middleware/authMiddleware.js` | Added null token check after Bearer split |
+| `utils/generateToken.js` | Added guard — throws clear error if `JWT_SECRET` env vars are missing |
+| `utils/generateToken.js` | Added fallback defaults `15m` / `7d` if env vars not set |
+| `utils/emailService.js` | Suppressed `console.log` in production |
+| `utils/emailService.js` | Added null check on transporter before sending appointment email |
+| `services/geminiService.js` | Suppressed `console.log/warn` in production |
+| `services/geminiService.js` | Fixed `lastErr` reuse instead of creating new error object |
+| `services/userService.js` | Fixed `req.body` mutation — now uses sanitized copy before update |
+| `controllers/aiController.js` | Removed all `console.error` calls |
+| `controllers/aiController.js` | Added `Array.isArray` check for symptoms input |
+| `controllers/aiController.js` | Wrapped `JSON.parse(symptoms)` in try/catch |
+| `controllers/userController.js` | Fixed profile photo — saves file to disk, stores URL instead of base64 in MongoDB |
+| `services/appointmentService.js` | Moved reschedule inline route logic into proper `rescheduleAppointment` service function |
+| `controllers/appointmentController.js` | Added `rescheduleAppointment` controller handler |
+| `routes/appointments.js` | Removed all inline logic — now uses controller cleanly |
+
+**Frontend**
+| File | Change |
+|---|---|
+| `pages/patient/AppointmentsPage.jsx` | Added `try/catch` to `openReschedule` and `handleDateChange` |
+| `pages/patient/PatientDashboard.jsx` | Removed unused `_user` variable |
+| `context/AuthContext.jsx` | Fixed `useMemo` dependency array — includes all functions |
+| `context/AppointmentContext.jsx` | Fixed `useMemo` dependency array — includes all functions |

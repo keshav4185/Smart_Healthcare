@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { appointmentService } from '../services/api/appointmentService';
 import { useAuth } from './AuthContext';
 
@@ -54,7 +54,7 @@ export const AppointmentProvider = ({ children }) => {
   };
 
   return (
-    <AppointmentContext.Provider value={{ appointments, loading, addAppointment, cancelAppointment, updateAppointment, fetchAppointments }}>
+    <AppointmentContext.Provider value={useMemo(() => ({ appointments, loading, addAppointment, cancelAppointment, updateAppointment, fetchAppointments }), [appointments, loading, addAppointment, cancelAppointment, updateAppointment, fetchAppointments])}>
       {children}
     </AppointmentContext.Provider>
   );

@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../../context/LanguageContext';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import { formatDate } from '../../utils/helpers';
 import { patientService } from '../../services/api/patientService';
+import axiosInstance from '../../services/api/axiosInstance';
 import { FaCalendarAlt, FaUserMd, FaFileAlt, FaFileMedical, FaPills } from 'react-icons/fa';
 import { FiUpload, FiEye, FiDownload, FiShare2 } from 'react-icons/fi';
 import { MdCheckCircle } from 'react-icons/md';
@@ -11,6 +14,8 @@ import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 const SCAN_TYPES = ['X-Ray', 'CT Scan', 'MRI Scan', 'Lab Report', 'Prescription'];
 
 const MedicalRecordsPage = () => {
+  const navigate = useNavigate();
+  const { isMarathi } = useLanguage();
   const [tab, setTab] = useState('records');
   const [records, setRecords] = useState([]);
   const [prescriptions, setPrescriptions] = useState([]);
@@ -20,6 +25,9 @@ const MedicalRecordsPage = () => {
   const [uploadError, setUploadError] = useState('');
   const [uploadSuccess, setUploadSuccess] = useState('');
   const [uploadForm, setUploadForm] = useState({ type: 'X-Ray', file: null, symptoms: '' });
+  const [aiAnalysis, setAiAnalysis] = useState(null);
+  const [suggestedDoctors, setSuggestedDoctors] = useState([]);
+  const [analyzing, setAnalyzing] = useState(false);
 
   const fetchRecords = () => {
     setLoading(true);
@@ -39,17 +47,49 @@ const MedicalRecordsPage = () => {
     if (!uploadForm.file) return;
     setUploading(true);
     setUploadError('');
+    setAnalyzing(true);
+    setAiAnalysis(null);
+    setSuggestedDoctors([]);
     try {
+      // First analyze with AI
+      const formData = new FormData();
+      formData.append('image', uploadForm.file);
+      formData.append('scanType', uploadForm.type);
+      if (uploadForm.symptoms) formData.append('symptoms', JSON.stringify(uploadForm.symptoms.split(',').map(s => s.trim())));
+      
+      const aiRes = await axiosInstance.post('/ai/scan-analysis', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      const analysis = aiRes.data.data;
+      setAiAnalysis(analysis);
+      
+      // Extract specialist from recommendation
+      const recommendation = analysis.recommendation || '';
+      const specialistMatch = recommendation.match(/consult\s+(?:a\s+)?([A-Za-z\s]+?)(?:\s+for|\s+immediately|\.|$)/i);
+      const specialist = specialistMatch ? specialistMatch[1].trim() : '';
+      
+      // Fetch matching doctors
+      if (specialist) {
+        const doctorsRes = await axiosInstance.get('/patient/doctors');
+        const allDoctors = Array.isArray(doctorsRes.data.data) ? doctorsRes.data.data : doctorsRes.data.data?.doctors || [];
+        const keyword = specialist.toLowerCase();
+        const matched = allDoctors.filter(d => {
+          if (!d.specialty) return false;
+          const specialty = d.specialty.toLowerCase();
+          return specialty.includes(keyword) || keyword.includes(specialty);
+        });
+        setSuggestedDoctors(matched.slice(0, 3));
+      }
+      
+      // Then upload the scan
       await patientService.uploadScan(uploadForm.file, uploadForm.type, uploadForm.symptoms);
-      setUploadSuccess('File uploaded successfully!');
-      setShowUpload(false);
-      setUploadForm({ type: 'X-Ray', file: null, symptoms: '' });
+      setUploadSuccess('Scan analyzed and uploaded successfully!');
       fetchRecords();
-      setTimeout(() => setUploadSuccess(''), 3000);
-    } catch {
-      setUploadError('Upload failed. Please try again.');
+    } catch (err) {
+      setUploadError(err.response?.data?.message || 'Upload failed. Please try again.');
     } finally {
       setUploading(false);
+      setAnalyzing(false);
     }
   };
 
@@ -127,10 +167,55 @@ const MedicalRecordsPage = () => {
               <textarea value={uploadForm.symptoms} onChange={(e) => setUploadForm({ ...uploadForm, symptoms: e.target.value })} className="input-field min-h-16 text-sm" placeholder="e.g., Chest pain, Fever..." />
             </div>
             {uploadError && <p className="text-red-500 text-sm">{uploadError}</p>}
+            
+            {analyzing && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700">
+                <AiOutlineLoading3Quarters className="inline animate-spin mr-2" />{isMarathi ? 'AI स्कॅन विश्लेषण करत आहे...' : 'Analyzing scan with AI...'}
+              </div>
+            )}
+            
+            {aiAnalysis && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3 space-y-2">
+                <p className="text-sm font-semibold text-green-800">{isMarathi ? 'AI विश्लेषण पूर्ण' : 'AI Analysis Complete'}</p>
+                <p className="text-xs text-green-700"><strong>{isMarathi ? 'निष्कर्ष:' : 'Finding:'}</strong> {aiAnalysis.finding}</p>
+                <p className="text-xs text-green-700"><strong>{isMarathi ? 'तीव्रता:' : 'Severity:'}</strong> {aiAnalysis.severity}</p>
+                <p className="text-xs text-green-700"><strong>{isMarathi ? 'अंदाजित लक्षणे:' : 'Predicted Symptoms:'}</strong> {isMarathi ? aiAnalysis.predicted_symptoms_mr : aiAnalysis.predicted_symptoms_en}</p>
+                <p className="text-xs text-green-700"><strong>{isMarathi ? 'शिफारस:' : 'Recommendation:'}</strong> {aiAnalysis.recommendation}</p>
+
+                {aiAnalysis.home_therapy?.length > 0 && (
+                  <div className="mt-2 pt-2 border-t border-green-300">
+                    <p className="text-xs font-semibold text-green-800 mb-1">🏠 {isMarathi ? 'घरगुती उपाय:' : 'Home Remedies:'}</p>
+                    <ul className="space-y-1">
+                      {(isMarathi ? aiAnalysis.home_therapy_mr : aiAnalysis.home_therapy).map((remedy, i) => (
+                        <li key={i} className="text-xs text-green-700 flex gap-1"><span>{i + 1}.</span><span>{remedy}</span></li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {suggestedDoctors.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-green-300">
+                    <p className="text-xs font-semibold text-green-800 mb-2">{isMarathi ? 'सुचवलेले डॉक्टर:' : 'Suggested Doctors:'}</p>
+                    <div className="space-y-2">
+                      {suggestedDoctors.map(doc => (
+                        <div key={doc._id} className="flex items-center justify-between bg-white rounded p-2">
+                          <div>
+                            <p className="text-xs font-medium text-gray-800">{doc.name}</p>
+                            <p className="text-xs text-gray-600">{doc.specialty} • ₹{doc.fee} • {doc.available !== false ? '🟢' : '🔴'}</p>
+                          </div>
+                          <Button size="sm" variant="primary" disabled={doc.available === false} onClick={() => navigate(`/patient/book-appointment/${doc._id}`)}>{isMarathi ? 'बुक करा' : 'Book'}</Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            
             <div className="flex gap-3">
-              <Button type="button" variant="secondary" onClick={() => { setShowUpload(false); setUploadError(''); setUploadForm({ type: 'X-Ray', file: null, symptoms: '' }); }}>Cancel</Button>
-              <Button type="submit" variant="primary" className="flex-1" disabled={uploading}>
-                {uploading ? <><AiOutlineLoading3Quarters className="inline animate-spin mr-1" />Uploading...</> : <><FiUpload className="inline mr-1" />Upload Record</>}
+              <Button type="button" variant="secondary" onClick={() => { setShowUpload(false); setUploadError(''); setUploadForm({ type: 'X-Ray', file: null, symptoms: '' }); setAiAnalysis(null); setSuggestedDoctors([]); }}>Cancel</Button>
+              <Button type="submit" variant="primary" className="flex-1" disabled={uploading || analyzing}>
+                {uploading ? <><AiOutlineLoading3Quarters className="inline animate-spin mr-1" />Uploading...</> : <><FiUpload className="inline mr-1" />Analyze & Upload</>}
               </Button>
             </div>
           </form>

@@ -22,7 +22,10 @@ const DoctorPatientsPage = () => {
 
   useEffect(() => {
     doctorService.getPatients()
-      .then(data => setPatients(data || []))
+      .then(data => {
+        const list = Array.isArray(data) ? data : data?.patients || [];
+        setPatients(list);
+      })
       .catch(() => setPatients([]))
       .finally(() => setLoading(false));
   }, []);

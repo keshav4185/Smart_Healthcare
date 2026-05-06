@@ -1,2 +1,1 @@
-// Deprecated — no longer used.
-// Auth tokens are stored in localStorage via AuthContext and axiosInstance.
+// This file is intentionally empty. Auth tokens are managed via AuthContext and axiosInstance.

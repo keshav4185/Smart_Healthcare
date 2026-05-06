@@ -14,7 +14,7 @@ import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 
 const PatientDashboard = () => {
   const navigate = useNavigate();
-  const { user: _user } = useAuth();
+  const { user } = useAuth();
   const [stats, setStats] = useState({ upcomingAppointments: 0, completedAppointments: 0, pendingDiagnoses: 0 });
   const [recentAppointments, setRecentAppointments] = useState([]);
   const [showUpload, setShowUpload] = useState(false);

@@ -41,16 +41,20 @@ const AppointmentsPage = () => {
     const existingDate = apt.date ? new Date(apt.date).toISOString().split('T')[0] : '';
     setRescheduleForm({ date: existingDate, timeSlot: apt.timeSlot || '' });
     if (existingDate) {
-      const slots = await appointmentService.getBookedSlots(apt.doctorId?._id || apt.doctorId, existingDate);
-      setBookedSlots(slots);
+      try {
+        const slots = await appointmentService.getBookedSlots(apt.doctorId?._id || apt.doctorId, existingDate);
+        setBookedSlots(slots);
+      } catch { setBookedSlots([]); }
     }
   };
 
   const handleDateChange = async (date) => {
     setRescheduleForm(prev => ({ ...prev, date, timeSlot: '' }));
     if (date && rescheduleApt) {
-      const slots = await appointmentService.getBookedSlots(rescheduleApt.doctorId?._id || rescheduleApt.doctorId, date);
-      setBookedSlots(slots);
+      try {
+        const slots = await appointmentService.getBookedSlots(rescheduleApt.doctorId?._id || rescheduleApt.doctorId, date);
+        setBookedSlots(slots);
+      } catch { setBookedSlots([]); }
     }
   };
 

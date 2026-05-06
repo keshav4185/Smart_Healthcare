@@ -8,7 +8,7 @@ export const doctorService = {
 
   getPatients: async () => {
     const res = await axiosInstance.get('/doctor/patients');
-    return res.data.data;
+    return res.data.data?.patients || [];
   },
 
   saveDiagnosis: async (payload) => {

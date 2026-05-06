@@ -32,8 +32,9 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     Promise.all([adminService.getDashboard(), adminService.getDoctors()])
-      .then(([dashData, doctorList]) => {
-        setDoctors(doctorList || []);
+      .then(([dashData, rawDoctors]) => {
+        const doctorList = Array.isArray(rawDoctors) ? rawDoctors : rawDoctors?.doctors || [];
+        setDoctors(doctorList);
         setStats({
           totalDoctors: dashData.totalDoctors || doctorList.length,
           pending: dashData.pendingDoctors || doctorList.filter(d => d.status === 'pending').length,

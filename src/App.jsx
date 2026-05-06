@@ -21,6 +21,7 @@ import MedicalRecordsPage from './pages/patient/MedicalRecordsPage';
 import DoctorDashboard from './pages/doctor/DoctorDashboard';
 import DoctorPatientsPage from './pages/doctor/DoctorPatientsPage';
 import DoctorAppointmentsPage from './pages/doctor/DoctorAppointmentsPage';
+import DoctorDiagnosesPage from './pages/doctor/DoctorDiagnosesPage';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import ProfilePage from './pages/ProfilePage';
 
@@ -47,7 +48,7 @@ function App() {
                 <Route path="doctor/dashboard" element={<ProtectedRoute allowedRoles={[USER_ROLES.DOCTOR]}><DoctorDashboard /></ProtectedRoute>} />
                 <Route path="doctor/appointments" element={<ProtectedRoute allowedRoles={[USER_ROLES.DOCTOR]}><DoctorAppointmentsPage /></ProtectedRoute>} />
                 <Route path="doctor/patients" element={<ProtectedRoute allowedRoles={[USER_ROLES.DOCTOR]}><DoctorPatientsPage /></ProtectedRoute>} />
-                <Route path="doctor/diagnoses" element={<ProtectedRoute allowedRoles={[USER_ROLES.DOCTOR]}><div className="text-center py-12"><h2 className="text-2xl font-bold">Diagnoses</h2><p className="text-gray-600 mt-2">Coming soon...</p></div></ProtectedRoute>} />
+                <Route path="doctor/diagnoses" element={<ProtectedRoute allowedRoles={[USER_ROLES.DOCTOR]}><DoctorDiagnosesPage /></ProtectedRoute>} />
                 <Route path="admin/dashboard" element={<ProtectedRoute allowedRoles={[USER_ROLES.ADMIN]}><AdminDashboard /></ProtectedRoute>} />
                 <Route path="profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
               </Route>

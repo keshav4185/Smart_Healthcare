@@ -24,7 +24,10 @@ const DoctorListPage = () => {
 
   useEffect(() => {
     axiosInstance.get('/patient/doctors')
-      .then(res => setDoctors(res.data.data || []))
+      .then(res => {
+        const data = res.data.data;
+        setDoctors(Array.isArray(data) ? data : data?.doctors || []);
+      })
       .catch(() => setDoctors([]))
       .finally(() => setLoading(false));
   }, []);

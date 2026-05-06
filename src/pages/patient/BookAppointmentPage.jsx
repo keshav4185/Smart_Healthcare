@@ -91,8 +91,7 @@ const BookAppointmentPage = () => {
     </div>
   );
 
-  const doctorIdForBooking = doctor._id || doctor.id;
-  void doctorIdForBooking;
+  const doctorId = doctor._id || doctor.id;
 
   return (
     <div className="max-w-4xl mx-auto">

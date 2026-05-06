@@ -19,8 +19,9 @@ const DoctorDashboard = () => {
   useEffect(() => {
     doctorService.getDashboard()
       .then(data => {
+        const todayStr = new Date().toISOString().split('T')[0];
         setStats({
-          todayAppointments: data.appointments?.filter(a => a.date && a.date.split('T')[0] === new Date().toISOString().split('T')[0]).length || 0,
+          todayAppointments: data.appointments?.filter(a => a.date && new Date(a.date).toISOString().split('T')[0] === todayStr).length || 0,
           totalPatients: data.totalPatients || 0,
           pendingReports: data.appointments?.filter(a => a.status === 'pending').length || 0,
           completedToday: data.appointments?.filter(a => a.status === 'completed').length || 0,

@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { authService } from '../services/api/authService';
 
 const AuthContext = createContext(null);
@@ -72,7 +72,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, isAuthenticated, login, register, logout, updateUser }}>
+    <AuthContext.Provider value={useMemo(() => ({ user, loading, isAuthenticated, login, register, logout, updateUser }), [user, loading, isAuthenticated, login, register, logout, updateUser])}>
       {children}
     </AuthContext.Provider>
   );

@@ -57,7 +57,7 @@ const ProfilePage = () => {
       .catch(() => {
         setFormData(prev => ({ ...prev, name: user?.name || '', email: user?.email || '' }));
       });
-  }, []);
+  }, [user?.name, user?.email]);
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
@@ -119,8 +119,9 @@ const ProfilePage = () => {
       setSaved(true);
       setEditing(false);
       setTimeout(() => setSaved(false), 3000);
-    } catch { /* ignore */ }
-    finally {
+    } catch (err) {
+      alert(err?.response?.data?.message || 'Failed to update profile. Please try again.');
+    } finally {
       setLoading(false);
     }
   };

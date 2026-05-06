@@ -8,7 +8,7 @@ export const adminService = {
 
   getDoctors: async (status = '') => {
     const res = await axiosInstance.get(`/admin/doctors${status ? `?status=${status}` : ''}`);
-    return res.data.data;
+    return res.data.data?.doctors || [];
   },
 
   updateDoctorStatus: async (id, status) => {
